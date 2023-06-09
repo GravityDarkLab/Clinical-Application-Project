@@ -1,0 +1,28 @@
+version: "3.8"
+services:
+  hapi-fhir:
+    build: .
+    container_name: hapi-fhir
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/ || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  db:
+    image: postgres:13-alpine
+    container_name: hapi-fhir-postgres-db
+    restart: on-failure
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: "hapi"
+      POSTGRES_USER: "admin"
+      POSTGRES_PASSWORD: "admin"
+    volumes:
+      - hapi-fhir-postgres-db:/var/lib/postgresql/data
+
+volumes:
+  hapi-fhir-postgres-db:

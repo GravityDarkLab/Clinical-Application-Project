@@ -1,0 +1,27 @@
+{
+    "resourceType": "Patient",
+    "name": [
+        {
+        "use": "official",
+        "given": ["Max"],
+        "family": "Mustermann"
+        }
+    ],
+    "gender": "male",
+    "birthDate": "1997-01-01",
+    "telecom": [{
+        "value": "0012341234",
+        "use": "mobile",
+        "system": "phone"
+    },
+    {
+        "system": "email",
+        "value": "max.mustermann@muster.com"
+    }],
+    "address": [{
+        "line": ["Test str. 123"],
+        "city": "München",
+        "state": "Bavaria",
+        "postalCode": "1234"
+    }]
+}

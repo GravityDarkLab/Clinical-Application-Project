@@ -1,0 +1,7 @@
+Name: Max Mustermann
+Gender: Male
+DOB: 01.01.1997
+Nummer: 0012341234
+Email: max.mustermann@muster.com
+Address: Test str. 123 , München
+Pin: 123456
