@@ -202,8 +202,14 @@ const PatientList: React.FC = () => {
         <tbody>
           {filterPatients().map((patient) => (
             <tr key={patient.id}>
-              <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5">
-                {patient.identifier?.[0]?.value || "Nun"}
+              <td className="p-4 font-mono md:font-mono text-lg/2 md:text-lg/2 whitespace-nowrap">
+                {patient.identifier?.[0]?.value === undefined ? (
+                  <div className="flex items-center justify-center h-full">
+                    Nun
+                  </div>
+                ) : (
+                  patient.identifier?.[0]?.value
+                )}
               </td>
               <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5">
                 {patient.active ? "aktiv" : "inaktiv"}
@@ -220,11 +226,25 @@ const PatientList: React.FC = () => {
               <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5">
                 {patient.birthDate}
               </td>
+              {/* Phone */}
               <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5">
-                {patient.telecom?.[0]?.value}
+                {patient.telecom?.[0]?.value === undefined ? (
+                  <div className="flex items-center justify-center h-full">
+                    Nun
+                  </div>
+                ) : (
+                  patient.telecom?.[0]?.value
+                )}
               </td>
+              {/* Mail */}
               <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5">
-                {patient.telecom?.[1]?.value}
+                {patient.telecom?.[1]?.value === undefined ? (
+                  <div className="flex items-center justify-center h-full">
+                    Nun
+                  </div>
+                ) : (
+                  patient.telecom?.[1]?.value
+                )}
               </td>
               <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5">
                 {generatePatientAddress(patient)}

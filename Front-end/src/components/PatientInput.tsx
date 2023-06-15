@@ -160,230 +160,234 @@ const PatientForm: React.FC = () => {
   };
 
   return (
-    <form
-      className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3"
-      onSubmit={handleSubmit}
-    >
-      <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
-        <label>
-          Given Name:
-          <input
-            className="rounded border-b-2"
-            type="text"
-            name="Vorname"
-            required
-          />
-        </label>
-        <br />
+    <div>
+      <div className="flex justify-center p-10 bg-sky-800 text-4xl text-white mb-10">
+        Enter new Patient
       </div>
-      <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
-        <label>
-          Family Name:
-          <input
-            className="rounded border-b-2"
-            type="text"
-            name="Nachname"
-            required
-          />
-        </label>
-        <br />
-      </div>
+      <form
+        className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3"
+        onSubmit={handleSubmit}
+      >
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Given Name:
+            <input
+              className="rounded border-b-2"
+              type="text"
+              name="Vorname"
+              required
+            />
+          </label>
+          <br />
+        </div>
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Family Name:
+            <input
+              className="rounded border-b-2"
+              type="text"
+              name="Nachname"
+              required
+            />
+          </label>
+          <br />
+        </div>
 
-      <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
-        <label>
-          Title:
-          <select className="text-sm" name="DrorProf" defaultValue="">
-            <option value="" disabled>
-              Select Titel
-            </option>
-            <option value="Dr.">Dr.</option>
-            <option value="Prof.">Prof.</option>
-            <option value="">None</option>
-          </select>
-        </label>
-        <br />
-      </div>
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Title:
+            <select className="text-sm" name="DrorProf" defaultValue="">
+              <option value="" disabled>
+                Select Titel
+              </option>
+              <option value="Dr.">Dr.</option>
+              <option value="Prof.">Prof.</option>
+              <option value="">None</option>
+            </select>
+          </label>
+          <br />
+        </div>
 
-      <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
-        <label>
-          Identifier:
-          <input
-            className="rounded border-b-2"
-            type="text"
-            name="identifier"
-            required
-          />
-        </label>
-        <br />
-      </div>
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Identifier:
+            <input
+              className="rounded border-b-2"
+              type="text"
+              name="identifier"
+              required
+            />
+          </label>
+          <br />
+        </div>
 
-      <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
-        <label>
-          Gender:
-          <select className="rounded border-b-2" name="gender" required>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-        </label>
-        <br />
-      </div>
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Gender:
+            <select className="rounded border-b-2" name="gender" required>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+          <br />
+        </div>
 
-      <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
-        <label>
-          Birth Date:
-          <input
-            className="rounded border-b-2"
-            type="number"
-            name="day"
-            min="1"
-            max="31"
-            required
-          />
-          .
-          <input
-            className="rounded border-b-2"
-            type="number"
-            name="month"
-            min="1"
-            max="12"
-            required
-          />
-          .
-          <input
-            className="rounded border-b-2"
-            type="number"
-            name="year"
-            min="1900"
-            max="2023"
-            required
-          />
-        </label>
-        <br />
-      </div>
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Birth Date:
+            <input
+              className="rounded border-b-2"
+              type="number"
+              name="day"
+              min="1"
+              max="31"
+              required
+            />
+            .
+            <input
+              className="rounded border-b-2"
+              type="number"
+              name="month"
+              min="1"
+              max="12"
+              required
+            />
+            .
+            <input
+              className="rounded border-b-2"
+              type="number"
+              name="year"
+              min="1900"
+              max="2023"
+              required
+            />
+          </label>
+          <br />
+        </div>
 
-      <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
-        <label>
-          Email:
-          <input
-            className="rounded border-b-2"
-            type="email"
-            name="email"
-            required
-          />
-        </label>
-        <br />
-      </div>
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Email:
+            <input
+              className="rounded border-b-2"
+              type="email"
+              name="email"
+              required
+            />
+          </label>
+          <br />
+        </div>
 
-      <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
-        <label>
-          Phone:
-          <input
-            className="rounded border-b-2"
-            type="tel"
-            name="phone"
-            required
-          />
-        </label>
-        <br />
-      </div>
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Phone:
+            <input
+              className="rounded border-b-2"
+              type="tel"
+              name="phone"
+              required
+            />
+          </label>
+          <br />
+        </div>
 
-      <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
-        <label>
-          Street and Number:
-          <input
-            className="rounded border-b-2"
-            type="text"
-            name="street_number"
-            required
-          />
-        </label>
-        <br />
-      </div>
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Street and Number:
+            <input
+              className="rounded border-b-2"
+              type="text"
+              name="street_number"
+              required
+            />
+          </label>
+          <br />
+        </div>
 
-      <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
-        <label>
-          City:
-          <input
-            className="rounded border-b-2"
-            type="text"
-            name="city"
-            required
-          />
-        </label>
-        <br />
-      </div>
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            City:
+            <input
+              className="rounded border-b-2"
+              type="text"
+              name="city"
+              required
+            />
+          </label>
+          <br />
+        </div>
 
-      <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
-        <label>
-          Postal Code:
-          <input
-            className="rounded border-b-2"
-            type="text"
-            name="postalCode"
-            required
-          />
-        </label>
-        <br />
-      </div>
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Postal Code:
+            <input
+              className="rounded border-b-2"
+              type="text"
+              name="postalCode"
+              required
+            />
+          </label>
+          <br />
+        </div>
 
-      <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
-        <label>
-          State:
-          <input
-            className="rounded border-b-2"
-            type="text"
-            name="state"
-            required
-          />
-        </label>
-        <br />
-      </div>
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            State:
+            <input
+              className="rounded border-b-2"
+              type="text"
+              name="state"
+              required
+            />
+          </label>
+          <br />
+        </div>
 
-      <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
-        <label>
-          Country:
-          <input
-            className="rounded border-b-2"
-            type="text"
-            name="country"
-            required
-          />
-        </label>
-        <br />
-      </div>
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Country:
+            <input
+              className="rounded border-b-2"
+              type="text"
+              name="country"
+              required
+            />
+          </label>
+          <br />
+        </div>
 
-      <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
-        <label>
-          Photo:
-          <input type="file" accept="image/*" onChange={handlePhotoChange} />
-        </label>
-        <br />
-      </div>
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Photo:
+            <input type="file" accept="image/*" onChange={handlePhotoChange} />
+          </label>
+          <br />
+        </div>
 
-      <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
-        <label>
-          Active:
-          <input
-            className="rounded border-b-2"
-            type="checkbox"
-            name="active"
-            defaultChecked
-          />
-        </label>
-        <br />
-      </div>
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Active:
+            <input
+              className="rounded border-b-2"
+              type="checkbox"
+              name="active"
+              defaultChecked
+            />
+          </label>
+          <br />
+        </div>
 
-      <div className="p-2 justify-center flex-1 bottom-3 mb-5">
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded object-center"
-          type="submit"
-        >
-          Submit
-        </button>
-      </div>
-      <hr className="h-px my-20 bg-gray-200 border-1 dark:bg-gray-700" />
-    </form>
+        <div className="justify-center flex-2">
+          <button
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded object-center text-lg "
+            type="submit"
+          >
+            Submit
+          </button>
+        </div>
+      </form>
+    </div>
   );
 };
 
