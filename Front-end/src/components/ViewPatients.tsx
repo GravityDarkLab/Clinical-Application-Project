@@ -1,18 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ChangeEvent } from "react";
 import { fhirR4 } from "@smile-cdr/fhirts";
-
-// Assuming you have defined appropriate types for Identifier, HumanName, Address, and Contact
-
-interface BundleEntry {
-  resource: fhirR4.Patient;
-  // Define other properties of the Bundle entry if needed ---> Extensions if needed
-}
+import BundleEntry from "./BundleEntry";
+import { filterPatients, sortPatients } from "./utils";
 
 const PatientList: React.FC = () => {
   // State variables
   const [patients, setPatients] = useState<fhirR4.Patient[]>([]);
   const [searchText, setSearchText] = useState("");
   const [filterAttribute, setFilterAttribute] = useState("");
+  const [sortAttribute, setSortAttribute] = useState("");
 
   // Fetch patients when the component mounts
   useEffect(() => {
@@ -24,7 +20,6 @@ const PatientList: React.FC = () => {
     try {
       const response = await fetch("http://localhost:8080/fhir/Patient"); // Replace with your API endpoint
       const data = await response.json();
-
       // Extract the resource property from the Bundle entry
       const patientsData = data.entry.map(
         (entry: BundleEntry) => entry.resource
@@ -38,38 +33,33 @@ const PatientList: React.FC = () => {
   };
 
   // Filter patients based on the selected attribute and search text
-  const filterPatients = () => {
-    const filteredPatients = patients.filter((patient) => {
-      if (filterAttribute === "name") {
-        return patient.name?.[0]?.given?.[0]
-          .toLowerCase()
-          .includes(searchText.toLowerCase());
-      } else if (filterAttribute === "birthDate") {
-        return patient.birthDate
-          ?.toLowerCase()
-          .includes(searchText.toLowerCase());
-      } else if (filterAttribute === "identifier") {
-        return patient.identifier?.[0].value
-          ?.toString()
-          .toLowerCase()
-          .includes(searchText.toLowerCase());
-      } else {
-        // Add conditions for other attributes you want to filter by
-      }
-    });
-    return filteredPatients;
+
+  const filterAndSortPatients = () => {
+    const filteredPatients = filterPatients(
+      patients,
+      filterAttribute,
+      searchText
+    );
+    const sortedPatients = sortPatients(filteredPatients, sortAttribute);
+    return sortedPatients;
   };
 
   // Handle search input change
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchText(event.target.value);
   };
-  // Handle attribute selection change
-  const handleAttributeChange = (
+  // Handle attributes selection change
+  const handleFilterAttributeChange = (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
     setFilterAttribute(event.target.value);
   };
+  const handleSortAttributeChange = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    setSortAttribute(event.target.value);
+  };
+
   // Refresh the patient data by fetching patients again
   const handleRefresh = () => {
     fetchPatients(); // Fetch patients again to refresh the data
@@ -138,16 +128,31 @@ const PatientList: React.FC = () => {
 
   return (
     <div>
-      <div className="flex items-center mb-4 font-mono md:font-mono text-lg/5 md:text-lg/5">
+      <div className="flex justify-center p-10 bg-sky-800 text-4xl text-white mb-10">
+        What are you looking for?
+      </div>
+      <div className="flex items-center mb-4 font-mono md:font-mono text-lg/5 md:text-lg/5 justify-center">
         <select
           className="rounded border-b-2 mr-2 font-mono md:font-mono text-lg/5 md:text-lg/5"
           value={filterAttribute}
-          onChange={handleAttributeChange}
+          onChange={handleFilterAttributeChange}
         >
           <option value="">Search by</option>
           <option value="name">Name</option>
+          <option value="family">Family Name</option>
           <option value="birthDate">Birth Date</option>
           <option value="identifier">Identifier</option>
+          {/* Add options for other attributes */}
+        </select>
+        <select
+          className="rounded border-b-2 mr-2 font-mono md:font-mono text-lg/5 md:text-lg/5"
+          value={sortAttribute}
+          onChange={handleSortAttributeChange}
+        >
+          <option value="">Sort by</option>
+          <option value="name">Name</option>
+          <option value="family">Family Name</option>
+          <option value="birthDate">Birth Date</option>
           {/* Add options for other attributes */}
         </select>
         <input
@@ -200,7 +205,7 @@ const PatientList: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {filterPatients().map((patient) => (
+          {filterAndSortPatients().map((patient) => (
             <tr key={patient.id}>
               <td className="p-4 font-mono md:font-mono text-lg/2 md:text-lg/2 whitespace-nowrap">
                 {patient.identifier?.[0]?.value === undefined ? (
