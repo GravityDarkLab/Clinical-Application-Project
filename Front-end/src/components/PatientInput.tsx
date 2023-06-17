@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { fhirR4 } from "@smile-cdr/fhirts";
 import { v4 as uuidv4 } from "uuid";
+import HomeButton from "./HomeButton";
 
 const PatientForm: React.FC = () => {
   // State variables
@@ -161,6 +162,9 @@ const PatientForm: React.FC = () => {
 
   return (
     <div>
+      <div>
+        <HomeButton />
+      </div>
       <div className="flex justify-center p-10 bg-sky-800 text-4xl text-white mb-10">
         Enter new Patient
       </div>

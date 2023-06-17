@@ -1,10 +1,10 @@
-import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./App.css";
 import "./input.css";
 import PatientForm from "./components/PatientInput";
 import PatientList from "./components/ViewPatients";
-import Welcome from "./components/Home";
+import Welcome from "./components/Welcome";
+import PatientDetails from "./components/PatientDetails";
 
 function App() {
   return (
@@ -14,6 +14,7 @@ function App() {
           <Route path="/" element={<Welcome />} />
           <Route path="/search" element={<PatientList />} />
           <Route path="/add" element={<PatientForm />} />
+          <Route path="/patient/:patientId" element={<PatientDetails />} />
         </Routes>
       </div>
     </Router>

@@ -1,8 +1,7 @@
-import React from "react";
 import { Link } from "react-router-dom";
-import "./styles/home.css";
+import "./styles/WelcomeScreen.css";
 
-function Home() {
+function Welcome() {
   return (
     <div className="welcome-screen">
       <h1 className="welcome-screen-title">
@@ -29,4 +28,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default Welcome;

@@ -1,0 +1,61 @@
+.welcome-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #f7fafc;
+}
+
+.welcome-screen-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.welcome-screen-options {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.welcome-screen-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80%;
+  max-width: 300px;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-decoration: none;
+  color: #333333;
+  font-weight: bold;
+  font-size: 1.2rem;
+  transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;;
+}
+
+.welcome-screen-option:hover {
+  background-color: #f0f4f8;
+}
+.welcome-screen-option:hover.search {
+  background-color: #8fc7fe
+}
+.welcome-screen-option:hover.add {
+  background-color: #b5f9c2
+}
+.welcome-screen-option:hover.edit {
+  background-color: #fff29e
+}
+
+.welcome-screen-option-icon {
+  margin-right: 0.5rem;
+}
+
+.welcome-screen-option-text {
+  margin-left: 0.5rem;
+}
+
