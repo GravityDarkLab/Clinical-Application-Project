@@ -2,10 +2,13 @@ import React, { useState } from "react";
 import { fhirR4 } from "@smile-cdr/fhirts";
 import { v4 as uuidv4 } from "uuid";
 import HomeButton from "./HomeButton";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTimes } from "@fortawesome/free-solid-svg-icons";
 
 const PatientForm: React.FC = () => {
   // State variables
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [submissionStatus, setSubmissionStatus] = useState<string | null>(null);
 
   /**
    * Handles the form submission event.
@@ -120,7 +123,14 @@ const PatientForm: React.FC = () => {
             },
             body: JSON.stringify(newPatient),
           })
-            .then((response) => response.json())
+            .then((response) => {
+              if (response.ok) {
+                setSubmissionStatus("success");
+              } else {
+                setSubmissionStatus("failure");
+              }
+              response.json();
+            })
             .then((data) => {
               // Handle the response from the API
               console.log("Response from API:", data);
@@ -128,6 +138,7 @@ const PatientForm: React.FC = () => {
             .catch((error) => {
               // Handle any errors that occur during the request
               console.error("Error:", error);
+              setSubmissionStatus("failure");
             });
         }
       };
@@ -142,7 +153,14 @@ const PatientForm: React.FC = () => {
         },
         body: JSON.stringify(newPatient),
       })
-        .then((response) => response.json())
+        .then((response) => {
+          if (response.ok) {
+            setSubmissionStatus("success");
+          } else {
+            setSubmissionStatus("failure");
+          }
+          response.json();
+        })
         .then((data) => {
           // Handle the response from the API
           console.log("Response from API:", data);
@@ -150,6 +168,7 @@ const PatientForm: React.FC = () => {
         .catch((error) => {
           // Handle any errors that occur during the request
           console.error("Error:", error);
+          setSubmissionStatus("failure");
         });
     }
   };
@@ -158,6 +177,9 @@ const PatientForm: React.FC = () => {
     if (e.target.files && e.target.files.length > 0) {
       setPhotoFile(e.target.files[0]);
     }
+  };
+  const handleCloseNotification = () => {
+    setSubmissionStatus(null);
   };
 
   return (
@@ -390,6 +412,35 @@ const PatientForm: React.FC = () => {
             Submit
           </button>
         </div>
+        {submissionStatus && (
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="absolute inset-0 bg-gray-900 bg-opacity-50 backdrop-filter backdrop-blur-sm flex items-center justify-center">
+              <div className="max-w-md mx-auto">
+                <div className="bg-white shadow-lg rounded-lg p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <p className="text-lg font-semibold mr-2">
+                      {submissionStatus === "success"
+                        ? "Submission successful!"
+                        : "Submission failed. Please try again."}
+                    </p>
+                    <button
+                      className="text-gray-800 hover:text-gray-600"
+                      onClick={handleCloseNotification}
+                    >
+                      <FontAwesomeIcon
+                        icon={faTimes}
+                        className="h-5 w-5 text-gray-800 hover:text-red-400"
+                      />
+                    </button>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Patient was successfully added to the Database.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </form>
     </div>
   );

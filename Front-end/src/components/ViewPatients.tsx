@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ChangeEvent } from "react";
+import React, { useState, useEffect } from "react";
 import { fhirR4 } from "@smile-cdr/fhirts";
 import BundleEntry from "./BundleEntry";
 import { useNavigate } from "react-router-dom";

@@ -1,9 +1,8 @@
 import { fhirR4 } from "@smile-cdr/fhirts";
-import Patient from "./Patient";
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 
 export const filterPatients = (
-  patients: Patient[],
+  patients: fhirR4.Patient[],
   filterAttribute: string,
   searchText: string
 ) => {
@@ -26,7 +25,7 @@ export const filterPatients = (
         .toLowerCase()
         .includes(searchText.toLowerCase());
     } else {
-      // Add conditions for other attributes you want to filter by
+      return null;
     }
   });
   return filteredPatients;
@@ -38,13 +37,16 @@ export const filterPatients = (
  * @param sortAttribute - The attribute to sort the patients by ("name", "birthDate", "family", etc.).
  * @returns The sorted array of patients.
  */
-export const sortPatients = (patients: Patient[], sortAttribute: string) => {
+export const sortPatients = (
+  patients: fhirR4.Patient[],
+  sortAttribute: string
+) => {
   /**
    * Gets the value of the specified attribute for a given patient.
    * @param patient - The patient object.
    * @returns The value of the attribute or undefined if not found.
    */
-  const getValue = (patient: Patient) => {
+  const getValue = (patient: fhirR4.Patient) => {
     switch (sortAttribute) {
       case "name":
         return patient.name?.[0]?.given?.[0];
@@ -58,16 +60,18 @@ export const sortPatients = (patients: Patient[], sortAttribute: string) => {
     }
   };
 
-  return patients.sort((patientOne: Patient, patientTwo: Patient) => {
-    const patientOneValue = getValue(patientOne);
-    const patientTwoValue = getValue(patientTwo);
+  return patients.sort(
+    (patientOne: fhirR4.Patient, patientTwo: fhirR4.Patient) => {
+      const patientOneValue = getValue(patientOne);
+      const patientTwoValue = getValue(patientTwo);
 
-    if (patientOneValue === undefined || patientTwoValue === undefined) {
-      return 0;
+      if (patientOneValue === undefined || patientTwoValue === undefined) {
+        return 0;
+      }
+
+      return patientOneValue.localeCompare(patientTwoValue);
     }
-
-    return patientOneValue.localeCompare(patientTwoValue);
-  });
+  );
 };
 
 /**
@@ -114,7 +118,7 @@ const RenderPatientPhotos = ({ patient }: { patient: fhirR4.Patient }) => {
         >
           <img
             src={getCachedPhotoUrl(selectedPhoto)}
-            alt="Selected Photo"
+            alt="Latest observation"
             className="max-w-full max-h-full"
           />
         </div>

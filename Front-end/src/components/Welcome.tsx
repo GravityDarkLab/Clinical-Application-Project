@@ -8,7 +8,7 @@ function Welcome() {
         Welcome to the Patients Management System
       </h1>
       <div className="welcome-screen-options ">
-        <Link to="/search" className="welcome-screen-option search">
+        <Link to="/patient" className="welcome-screen-option search">
           <span className="welcome-screen-option-icon">🔍</span>
           <span className="welcome-screen-option-text">
             Search and View Patients

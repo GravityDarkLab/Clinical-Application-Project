@@ -12,7 +12,7 @@ function App() {
       <div className="min-h-screen flex flex-col">
         <Routes>
           <Route path="/" element={<Welcome />} />
-          <Route path="/search" element={<PatientList />} />
+          <Route path="/patient" element={<PatientList />} />
           <Route path="/add" element={<PatientForm />} />
           <Route path="/patient/:patientId" element={<PatientDetails />} />
         </Routes>
