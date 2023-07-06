@@ -1,45 +1,81 @@
 import { useState, useEffect, FormEvent } from "react";
 import { useParams } from "react-router-dom";
 import { fhirR4 } from "@smile-cdr/fhirts";
-import { renderPatientPhotos, generatePatientAddress } from "./utils";
+import { RenderObservationPhotos } from "./utils";
 import HomeButton from "./HomeButton";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faSave, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
-import EditPatientForm from "./EditPatientForm";
+import EditObservationForm from "./EditObservationForm";
+import BundleEntry from "./BundleEntry";
 
-const PatientDetails = () => {
-  const { patientId } = useParams();
-  const [patient, setPatient] = useState<fhirR4.Patient | null>(null);
+const ObservationDetails = () => {
+  const { observationId } = useParams();
+  const [observation, setObservation] = useState<fhirR4.Observation>();
+  const [media, setMedia] = useState<fhirR4.Media[]>([]);
+
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editedPatient, setEditedPatient] = useState<fhirR4.Patient>(
-    {} as fhirR4.Patient
-  );
+  const [searchText, setSearchText] = useState("");
+  const [editedObservation, setEditedObservation] =
+    useState<fhirR4.Observation>({} as fhirR4.Observation);
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchPatient();
-  }, [patientId]);
+    fetchObservation();
+  }, [observationId]);
 
-  const fetchPatient = async () => {
+  const fetchObservation = async () => {
     try {
+      console.log(`http://localhost:8080/fhir/Observation/${observationId}`);
       const response = await fetch(
-        `http://localhost:8080/fhir/Patient/${patientId}`
+        `http://localhost:8080/fhir/Observation/${observationId}`
       );
-      const data = await response.json();
-      //console.log(data);
-      setPatient(data);
+      const observationData = await response.json();
+
+      console.log(observationData);
+      setObservation(observationData);
+
+      const media_array: fhirR4.Media[] = [];
+
+      if (observationData) {
+        const array_derivedFrom = observationData.derivedFrom;
+
+        console.log(array_derivedFrom);
+        if (array_derivedFrom) {
+          for (let i = 0; i < array_derivedFrom.length; ++i) {
+            try {
+              const responseMedia = await fetch(
+                `http://localhost:8080/fhir/Media?identifier=${array_derivedFrom[i].identifier?.value}`
+              );
+
+              const dataMedia = await responseMedia.json();
+              const mediaData = dataMedia.entry.map(
+                (entry: BundleEntry) => entry.resource
+              );
+
+              media_array.push(mediaData[0]);
+              console.log(mediaData);
+            } catch (error) {
+              console.error("Error fetching Media:", error);
+            }
+          }
+        }
+      }
+
+      console.log(media_array);
+      setMedia(media_array);
     } catch (error) {
-      console.error("Error fetching patient:", error);
+      console.error("Error fetching Observation:", error);
     }
   };
 
   // Function to handle the edit button click
+
   const handleEdit = () => {
     setIsEditMode(true);
-    if (patient) {
-      setEditedPatient(patient);
+    if (observation) {
+      setEditedObservation(observation);
     }
   };
 
@@ -48,28 +84,26 @@ const PatientDetails = () => {
   };
 
   // Function to handle the SAVE
-  /*
-   * (This do nothings till now as the edit capabilty is not yet implemented!).
-   * PLEASE DON´T TOUCH THE SAVE ICON :) .
-   */
+
   const handleSave = async (
     event: FormEvent,
-    editedPatient: fhirR4.Patient
+    editedObservation: fhirR4.Observation
   ) => {
     event.preventDefault();
     try {
       const response = await fetch(
-        `http://localhost:8080/fhir/Patient/${patientId}`,
+        `http://localhost:8080/fhir/Observation/${observationId}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(editedPatient),
+          body: JSON.stringify(editedObservation),
         }
       );
       if (response.ok) {
-        setPatient(editedPatient);
+        setObservation(editedObservation);
+        console.log(response);
         setIsEditMode(false);
       } else {
         console.error("Failed to save patient data");
@@ -80,10 +114,11 @@ const PatientDetails = () => {
   };
 
   // Function to handle DELETE
+
   const handleDelete = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8080/fhir/Patient/${patientId}`,
+        `http://localhost:8080/fhir/Observation/${observationId}`,
         {
           method: "DELETE",
         }
@@ -99,14 +134,16 @@ const PatientDetails = () => {
   };
 
   // Render patient details
-  const renderPatientDetails = () => {
-    if (!patient) {
+  const renderObservationDetails = () => {
+    if (!observation) {
       return <p className="text-gray-500 text-lg">Loading...</p>;
     }
+
     if (isEditMode) {
       return (
-        <EditPatientForm
-          patient={patient}
+        <EditObservationForm
+          observation={observation}
+          media={media}
           onSave={handleSave}
           onCancel={handleCancelEdit}
         />
@@ -115,54 +152,43 @@ const PatientDetails = () => {
 
     return (
       <div className="max-w-md mx-auto p-4 bg-white shadow-lg rounded-lg">
-        <h2 className="text-2xl font-bold mb-4">Patient Details</h2>
+        <h2 className="text-2xl font-bold mb-4">Observation Details</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <p className="text-sm mb-2">
-              <span className="font-semibold">ID:</span> {patient.id}
+              <span className="font-semibold">ID:</span> {observation.id}
             </p>
             <p className="text-sm mb-2">
-              <span className="font-semibold">Name:</span>{" "}
-              {patient.name?.[0]?.given}
+              <span className="font-semibold">Identifier:</span>{" "}
+              {observation.identifier?.[0]?.value}
             </p>
             <p className="text-sm mb-2">
-              <span className="font-semibold">Family Name:</span>{" "}
-              {patient.name?.[0]?.family}
+              <span className="font-semibold">Status:</span>{" "}
+              {observation.status}
             </p>
             <p className="text-sm mb-2">
-              <span className="font-semibold">Gender:</span> {patient.gender}
+              <span className="font-semibold">Category</span>
+              {observation.category?.[0]?.coding?.[0]?.code}
             </p>
             <p className="text-sm mb-2">
-              <span className="font-semibold">Birthdate:</span>{" "}
-              {patient.birthDate}
+              <span className="font-semibold">Date:</span>{" "}
+              {observation.effectiveDateTime}
             </p>
           </div>
           <div>
             <p className="text-sm mb-2">
-              <span className="font-semibold">Phone:</span>{" "}
-              {patient.telecom?.[0]?.value === undefined ? (
+              <span className="font-semibold">Note:</span>{" "}
+              {observation.note?.[0]?.text === undefined ? (
                 <span className="text-gray-400">None</span>
               ) : (
-                patient.telecom?.[0]?.value
+                observation.note?.[0]?.text
               )}
-            </p>
-            <p className="text-sm mb-2">
-              <span className="font-semibold">E-mail:</span>{" "}
-              {patient.telecom?.[1]?.value === undefined ? (
-                <span className="text-gray-400">None</span>
-              ) : (
-                patient.telecom?.[1]?.value
-              )}
-            </p>
-            <p className="text-sm mb-2">
-              <span className="font-semibold">Address:</span>{" "}
-              {generatePatientAddress(patient)}
             </p>
           </div>
         </div>
         <div className="mt-4">
           <span className="font-semibold">Attachments:</span>{" "}
-          {renderPatientPhotos(patient)}
+          <RenderObservationPhotos media={media}></RenderObservationPhotos>
         </div>
         {
           <div className="flex justify-center mt-4">
@@ -182,14 +208,8 @@ const PatientDetails = () => {
             </button>
           </div>
         }
-        {/* Render other patient details */}
       </div>
     );
-  };
-  const handleObservationsClick = (patientId: string | undefined) => {
-    if (patientId) {
-      navigate(`/observations/${patientId}`);
-    }
   };
 
   return (
@@ -199,22 +219,12 @@ const PatientDetails = () => {
       </div>
       <div className="flex justify-center h-auto p-10 bg-sky-800 text-4xl text-white mb-10 overflow-x-auto">
         <div className="max-w-full md:max-w-[80%] lg:max-w-[70%]">
-          {patient?.name?.[0]?.given + " " + patient?.name?.[0]?.family}
+          {"Observation " + observation?.id}
         </div>
       </div>
-      <div className="flex items-center justify-center min-h-screen">
-        {renderPatientDetails()}
-      </div>
-      <div className="flex justify-center">
-        <button
-          onClick={() => handleObservationsClick(patient?.id)}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-5 m-4 rounded text-lg"
-        >
-          Show Observations
-        </button>
-      </div>
+      <div className="flex justify-center">{renderObservationDetails()}</div>
     </div>
   );
 };
 
-export default PatientDetails;
+export default ObservationDetails;

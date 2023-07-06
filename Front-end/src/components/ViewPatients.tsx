@@ -3,8 +3,8 @@ import { fhirR4 } from "@smile-cdr/fhirts";
 import BundleEntry from "./BundleEntry";
 import { useNavigate } from "react-router-dom";
 import {
-  filterPatients,
-  sortPatients,
+  filterResources,
+  sortResources,
   renderPatientPhotos,
   generatePatientAddress,
 } from "./utils";
@@ -14,26 +14,45 @@ const PatientList: React.FC = () => {
   // State variables
   const [patients, setPatients] = useState<fhirR4.Patient[]>([]);
   const [searchText, setSearchText] = useState("");
-  const [filterAttribute, setFilterAttribute] = useState("");
+  const [filterAttribute, setFilterAttribute] = useState("name");
   const [sortAttribute, setSortAttribute] = useState("");
+  const [patientsPerPage, setpatientsPerPage] = useState(20);
+  const [offsetPatientsPerPage, setoffsetPatientsPerPage] = useState(0);
   const navigate = useNavigate();
 
   // Fetch patients when the component mounts
   useEffect(() => {
     fetchPatients();
-  }, []);
+  }, [patientsPerPage, offsetPatientsPerPage]);
 
   // Fetch patients from the Server
   const fetchPatients = async () => {
     try {
-      const response = await fetch("http://localhost:8080/fhir/Patient"); // Replace with your API endpoint
+      const response = await fetch(
+        "http://localhost:8080/fhir/Patient?_count=" +
+          patientsPerPage +
+          "&_offset=" +
+          offsetPatientsPerPage
+      ); // Replace with your API endpoint
+      console.log(
+        "http://localhost:8080/fhir/Patient?_count=" +
+          patientsPerPage +
+          "&_offset=" +
+          offsetPatientsPerPage
+      );
       const data = await response.json();
       // Extract the resource property from the Bundle entry
-      const patientsData = data.entry.map(
-        (entry: BundleEntry) => entry.resource
-      );
-      // Store the extracted patients in state
-      setPatients(patientsData);
+
+      if ("entry" in data) {
+        console.log(data);
+        const patientsData = data.entry.map(
+          (entry: BundleEntry) => entry.resource
+        );
+        // Store the extracted patients in state
+        setPatients(patientsData);
+      } else {
+        //TODO : What should happen if we have reached the limit. Some warning?
+      }
       //console.log(patientsData);
     } catch (error) {
       console.error("Error fetching patients:", error);
@@ -43,12 +62,12 @@ const PatientList: React.FC = () => {
   // Filter patients based on the selected attribute and search text
 
   const filterAndSortPatients = () => {
-    const filteredPatients = filterPatients(
+    const filteredPatients = filterResources(
       patients,
       filterAttribute,
       searchText
     );
-    const sortedPatients = sortPatients(filteredPatients, sortAttribute);
+    const sortedPatients = sortResources(filteredPatients, sortAttribute);
     return sortedPatients;
   };
 
@@ -81,53 +100,111 @@ const PatientList: React.FC = () => {
     }
   };
 
+  const handlePatientsPerPageChange = (value: string) => {
+    const parsedValue = parseInt(value, 10);
+    setpatientsPerPage(parsedValue);
+  };
+
+  const handleOffsetPatientPerPageChange = (value: number) => {
+    if (value < 0) {
+      value = 0;
+    }
+    console.log(value);
+    setoffsetPatientsPerPage(value);
+  };
+
   return (
     <div>
       <div>
         <HomeButton />
       </div>
+
       <div className="flex justify-center h-auto p-10 bg-sky-800 text-4xl text-white mb-10 overflow-x-auto">
         <div className="max-w-full md:max-w-[80%] lg:max-w-[70%]">
           What are you looking for?
         </div>
       </div>
-      <div className="flex flex-wrap items-center mb-4 font-mono md:font-mono text-lg/5 md:text-lg/5 justify-center">
-        <select
-          className="rounded border-b-2 mr-2 font-mono md:font-mono text-lg/5 md:text-lg/5 mb-2 md:mb-0"
-          value={filterAttribute}
-          onChange={handleFilterAttributeChange}
-        >
-          <option value="">Search by</option>
-          <option value="name">Name</option>
-          <option value="family">Family Name</option>
-          <option value="birthDate">Birth Date</option>
-          <option value="identifier">Identifier</option>
-          {/* Add options for other attributes */}
-        </select>
-        <select
-          className="rounded border-b-2 mr-2 font-mono md:font-mono text-lg/5 md:text-lg/5 mb-2 md:mb-0"
-          value={sortAttribute}
-          onChange={handleSortAttributeChange}
-        >
-          <option value="">Sort by</option>
-          <option value="name">Name</option>
-          <option value="family">Family Name</option>
-          <option value="birthDate">Birth Date</option>
-          {/* Add options for other attributes */}
-        </select>
-        <input
-          className="rounded border-b-2 mr-2"
-          type="text"
-          value={searchText}
-          onChange={handleSearch}
-          placeholder="Search"
-        />
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          onClick={handleRefresh}
-        >
-          Refresh
-        </button>
+
+      <div>
+        <div className="flex flex-wrap items-center mb-4 font-mono md:font-mono text-lg/5 md:text-lg/5 justify-center">
+          <select
+            className="rounded border-b-2 mr-2 font-mono md:font-mono text-lg/5 md:text-lg/5 mb-2 md:mb-0"
+            value={filterAttribute}
+            onChange={handleFilterAttributeChange}
+          >
+            <option value="">Search by</option>
+            <option value="name">Name</option>
+            <option value="family">Family Name</option>
+            <option value="birthDate">Birth Date</option>
+            <option value="identifier">Identifier</option>
+            {/* Add options for other attributes */}
+          </select>
+          <select
+            className="rounded border-b-2 mr-2 font-mono md:font-mono text-lg/5 md:text-lg/5 mb-2 md:mb-0"
+            value={sortAttribute}
+            onChange={handleSortAttributeChange}
+          >
+            <option value="">Sort by</option>
+            <option value="name">Name</option>
+            <option value="family">Family Name</option>
+            <option value="birthDate">Birth Date</option>
+            {/* Add options for other attributes */}
+          </select>
+          <input
+            className="rounded border-b-2 mr-2"
+            type="text"
+            value={searchText}
+            onChange={handleSearch}
+            placeholder="Search"
+          />
+          <button
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            onClick={handleRefresh}
+          >
+            Refresh
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center mb-4 font-mono md:font-mono text-lg/5 md:text-lg/5 justify-center">
+          <div className="ml-4">
+            <label htmlFor="numberSelect">Patients per Page:</label>
+            <select
+              id="numberSelect"
+              onChange={(e) => handlePatientsPerPageChange(e.target.value)}
+              defaultValue={"20"}
+            >
+              <option value="">Select a number</option>
+              <option value="20">20</option>
+              <option value="30">30</option>
+              <option value="40">40</option>
+              <option value="50">50</option>
+
+              {/* Add more options if needed */}
+            </select>
+          </div>
+
+          <button
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2"
+            onClick={() =>
+              handleOffsetPatientPerPageChange(
+                offsetPatientsPerPage - patientsPerPage
+              )
+            }
+          >
+            Prev {patientsPerPage} Patients
+          </button>
+
+          <button
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2"
+            onClick={() =>
+              handleOffsetPatientPerPageChange(
+                offsetPatientsPerPage + patientsPerPage
+              )
+            }
+          >
+            Next {patientsPerPage} Patients
+          </button>
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">

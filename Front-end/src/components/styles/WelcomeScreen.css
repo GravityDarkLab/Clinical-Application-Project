@@ -47,9 +47,6 @@
 .welcome-screen-option:hover.add {
   background-color: #b5f9c2
 }
-.welcome-screen-option:hover.edit {
-  background-color: #fff29e
-}
 
 .welcome-screen-option-icon {
   margin-right: 0.5rem;

@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { fhirR4 } from "@smile-cdr/fhirts";
 import { v4 as uuidv4 } from "uuid";
 import HomeButton from "./HomeButton";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes } from "@fortawesome/free-solid-svg-icons";
+import SubmissionStatus from "./SubmissonStatus";
+import { post } from "./utils";
 
 const PatientForm: React.FC = () => {
   // State variables
@@ -19,51 +19,60 @@ const PatientForm: React.FC = () => {
     e.preventDefault();
     // Create a new identifier for the patient
     const newIdentifier = new fhirR4.Identifier();
-    newIdentifier.value = (
-      e.currentTarget.elements.namedItem("identifier") as HTMLInputElement
-    ).value;
+    newIdentifier.value = // TODO: Use as Krankenversicherungsnummer?
+      (
+        e.currentTarget.elements.namedItem("identifier") as HTMLInputElement
+      ).value;
     // Create a new human name for the patient
     const newHumanName = new fhirR4.HumanName();
     newHumanName.prefix = [
-      (e.currentTarget.elements.namedItem("DrorProf") as HTMLInputElement)
-        .value,
+      (e.currentTarget.elements.namedItem("title") as HTMLInputElement).value,
     ];
     newHumanName.family = (
-      e.currentTarget.elements.namedItem("Nachname") as HTMLInputElement
+      e.currentTarget.elements.namedItem("family") as HTMLInputElement
     ).value;
     newHumanName.given = [
-      (e.currentTarget.elements.namedItem("Vorname") as HTMLInputElement).value,
+      (e.currentTarget.elements.namedItem("givenName") as HTMLInputElement)
+        .value,
     ];
+
     // Get the gender value and validate it
-    let genderValue = (
+    const validGenders = new Set(["male", "female", "other"]);
+
+    const genderValue = (
       e.currentTarget.elements.namedItem("gender") as HTMLInputElement
     ).value;
-    const genderVal: fhirR4.Patient.GenderEnum | undefined =
-      genderValue === "male" ||
-      genderValue === "female" ||
-      genderValue === "other" ||
-      genderValue === "unknown"
-        ? genderValue
-        : undefined;
+
+    const genderVal: fhirR4.Patient.GenderEnum | undefined = validGenders.has(
+      genderValue
+    )
+      ? (genderValue as fhirR4.Patient.GenderEnum)
+      : undefined;
     // Construct the birth date in the required format
-    const db =
-      (e.currentTarget.elements.namedItem("year") as HTMLInputElement).value +
-      "-" +
-      (e.currentTarget.elements.namedItem("month") as HTMLInputElement).value +
-      "-" +
-      (e.currentTarget.elements.namedItem("day") as HTMLInputElement).value;
-    // Create a new contact point for email
-    const newEmail = new fhirR4.ContactPoint();
-    newEmail.system = "email";
-    newEmail.value = (
+    const birthDate = (
+      e.currentTarget.elements.namedItem("birthday") as HTMLInputElement
+    ).value;
+    // Create a new contact point for email & PhoneNumber
+    const emailValue = (
       e.currentTarget.elements.namedItem("email") as HTMLInputElement
     ).value;
-    // Create a new contact point for phone
-    const newPhone = new fhirR4.ContactPoint();
-    newPhone.system = "phone";
-    newPhone.value = (
+    const phoneValue = (
       e.currentTarget.elements.namedItem("phone") as HTMLInputElement
     ).value;
+
+    const createContactPoint = (
+      system: fhirR4.ContactPoint.SystemEnum,
+      value: string
+    ) => {
+      const contactPoint = new fhirR4.ContactPoint();
+      contactPoint.system = system;
+      contactPoint.value = value;
+      return contactPoint;
+    };
+
+    const newEmail = createContactPoint("email", emailValue);
+    const newPhone = createContactPoint("phone", phoneValue);
+
     // Create a new address for the patient
     const newAdresss = new fhirR4.Address();
     newAdresss.line = [
@@ -82,6 +91,42 @@ const PatientForm: React.FC = () => {
     newAdresss.country = (
       e.currentTarget.elements.namedItem("country") as HTMLInputElement
     ).value;
+
+    const newMaritalStatus = new fhirR4.CodeableConcept();
+    newMaritalStatus.coding = [
+      {
+        system: "http://hl7.org/fhir/ValueSet/marital-status",
+        code:
+          (
+            e.currentTarget.elements.namedItem(
+              "martialStatus"
+            ) as HTMLSelectElement
+          ).value ?? "",
+        display:
+          (
+            e.currentTarget.elements.namedItem(
+              "martialStatus"
+            ) as HTMLSelectElement
+          ).selectedOptions[0].textContent ?? "",
+      },
+    ];
+
+    //TODO: Add contact person
+    const patientLanguage = new fhirR4.CodeableConcept();
+    patientLanguage.coding = [
+      {
+        system: "urn:ietf:bcp:47",
+        code:
+          (e.currentTarget.elements.namedItem("language") as HTMLSelectElement)
+            .value ?? "",
+        display:
+          (e.currentTarget.elements.namedItem("language") as HTMLSelectElement)
+            .selectedOptions[0].textContent ?? "",
+      },
+    ];
+    const patientCommunication = new fhirR4.PatientCommunication();
+    patientCommunication.language = patientLanguage;
+
     //Create the Patient
     const newPatient: fhirR4.Patient = {
       identifier: [newIdentifier], // An identifier for this patient
@@ -90,96 +135,66 @@ const PatientForm: React.FC = () => {
       name: [newHumanName], // Whether this patient's record is in active use
       telecom: [newPhone, newEmail], // A contact detail for the individual
       gender: genderVal, // male | female | other | unknown
-      birthDate: db, //The format is YYYY, YYYY-MM, or YYYY-MM-DD
+      birthDate: birthDate, //The format is YYYY, YYYY-MM, or YYYY-MM-DD
       deceasedBoolean: false,
       deceasedDateTime: "",
       address: [newAdresss],
-      //maritalStatus: , Codeable Concept?
+      maritalStatus: newMaritalStatus,
       multipleBirthBoolean: false,
       multipleBirthInteger: 0,
       photo: [],
       contact: [],
-      communication: [],
+      communication: [patientCommunication],
       resourceType: "Patient",
     };
 
-    if (photoFile) {
-      const photoAttachment: fhirR4.Attachment = {
-        contentType: photoFile.type,
-        data: "",
-        id: uuidv4(), // Generate a unique ID for the attachment
-      };
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          photoAttachment.data = reader.result.split(",")[1] || "";
-          newPatient.photo = [photoAttachment];
-          // Submiting the patient data with the attachment
-          // console.log(JSON.stringify(newPatient));
-          fetch("http://localhost:8080/fhir/Patient", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(newPatient),
-          })
-            .then((response) => {
-              if (response.ok) {
-                setSubmissionStatus("success");
-              } else {
-                setSubmissionStatus("failure");
-              }
-              response.json();
-            })
-            .then((data) => {
-              // Handle the response from the API
-              console.log("Response from API:", data);
-            })
-            .catch((error) => {
-              // Handle any errors that occur during the request
-              console.error("Error:", error);
-              setSubmissionStatus("failure");
-            });
-        }
-      };
-      reader.readAsDataURL(photoFile);
-    } else {
-      // Submiting the patient data without the attachment.
-      console.log(newPatient);
-      fetch("http://localhost:8080/fhir/Patient", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newPatient),
-      })
+    const submitPatientData = (patientData: fhirR4.Patient) => {
+      post("http://localhost:8080/fhir/Patient", patientData)
         .then((response) => {
-          if (response.ok) {
-            setSubmissionStatus("success");
-          } else {
-            setSubmissionStatus("failure");
-          }
-          response.json();
-        })
-        .then((data) => {
           // Handle the response from the API
-          console.log("Response from API:", data);
+          console.log("Response from API:", response);
+          setSubmissionStatus("success");
         })
         .catch((error) => {
           // Handle any errors that occur during the request
           console.error("Error:", error);
           setSubmissionStatus("failure");
         });
-    }
+    };
+
+    const handlePhotoUpload = (
+      photoFile: File | null,
+      patientData: fhirR4.Patient
+    ) => {
+      if (photoFile) {
+        const photoAttachment: fhirR4.Attachment = {
+          contentType: photoFile.type,
+          data: "",
+          id: uuidv4(), // Generate a unique ID for the attachment
+        };
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === "string") {
+            photoAttachment.data = reader.result.split(",")[1] || "";
+            patientData.photo = [photoAttachment];
+            // Submit the patient data with the attachment
+            submitPatientData(patientData);
+          }
+        };
+        reader.readAsDataURL(photoFile);
+      } else {
+        // Submit the patient data without the attachment
+        submitPatientData(patientData);
+      }
+    };
+
+    handlePhotoUpload(photoFile, newPatient);
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setPhotoFile(e.target.files[0]);
     }
-  };
-  const handleCloseNotification = () => {
-    setSubmissionStatus(null);
   };
 
   return (
@@ -200,7 +215,7 @@ const PatientForm: React.FC = () => {
             <input
               className="rounded border-b-2"
               type="text"
-              name="Vorname"
+              name="givenName"
               required
             />
           </label>
@@ -212,7 +227,7 @@ const PatientForm: React.FC = () => {
             <input
               className="rounded border-b-2"
               type="text"
-              name="Nachname"
+              name="family"
               required
             />
           </label>
@@ -222,7 +237,7 @@ const PatientForm: React.FC = () => {
         <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
           <label>
             Title:
-            <select className="text-sm" name="DrorProf" defaultValue="">
+            <select className="text-sm" name="title" defaultValue="">
               <option value="" disabled>
                 Select Titel
               </option>
@@ -261,31 +276,11 @@ const PatientForm: React.FC = () => {
 
         <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
           <label>
-            Birth Date:
+            Birthday:
             <input
               className="rounded border-b-2"
-              type="number"
-              name="day"
-              min="1"
-              max="31"
-              required
-            />
-            .
-            <input
-              className="rounded border-b-2"
-              type="number"
-              name="month"
-              min="1"
-              max="12"
-              required
-            />
-            .
-            <input
-              className="rounded border-b-2"
-              type="number"
-              name="year"
-              min="1900"
-              max="2023"
+              type="date"
+              name="birthday"
               required
             />
           </label>
@@ -382,7 +377,38 @@ const PatientForm: React.FC = () => {
           </label>
           <br />
         </div>
-
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Martial Status:
+            <select className="rounded border-b-2" name="martialStatus">
+              <option value="S">Single</option>
+              <option value="F">Divorced</option>
+              <option value="M">Married</option>
+              <option value="W">Widowed</option>
+              <option value="P">Polygamous</option>
+              <option value="unknown">unknown</option>
+            </select>
+          </label>
+          <br />
+        </div>
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Language:
+            <select className="rounded border-b-2" name="language" required>
+              <option value="de">German</option>
+              <option value="en">English</option>
+              <option value="fr">French</option>
+              <option value="es">Spanish</option>
+              <option value="it">Italian</option>
+              <option value="nl">Dutch</option>
+              <option value="no">Norwegian</option>
+              <option value="pt">Portuguese</option>
+              <option value="ru">Russian</option>
+              <option value="ar">Arabic</option>
+            </select>
+          </label>
+          <br />
+        </div>
         <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
           <label>
             Photo:
@@ -412,35 +438,18 @@ const PatientForm: React.FC = () => {
             Submit
           </button>
         </div>
-        {submissionStatus && (
-          <div className="fixed inset-0 flex items-center justify-center z-50">
-            <div className="absolute inset-0 bg-gray-900 bg-opacity-50 backdrop-filter backdrop-blur-sm flex items-center justify-center">
-              <div className="max-w-md mx-auto">
-                <div className="bg-white shadow-lg rounded-lg p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <p className="text-lg font-semibold mr-2">
-                      {submissionStatus === "success"
-                        ? "Submission successful!"
-                        : "Submission failed. Please try again."}
-                    </p>
-                    <button
-                      className="text-gray-800 hover:text-gray-600"
-                      onClick={handleCloseNotification}
-                    >
-                      <FontAwesomeIcon
-                        icon={faTimes}
-                        className="h-5 w-5 text-gray-800 hover:text-red-400"
-                      />
-                    </button>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    Patient was successfully added to the Database.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+
+        <SubmissionStatus
+          submissionStatus={submissionStatus}
+          submissionTextSucess={
+            "Patient was successfully added to the Database."
+          }
+          submissionHeadlineSucess={"Submission successful!"}
+          submissionHeadlineFailure={"Submission failed. Please try again."}
+          submissionTextFailure={
+            "Patient could not be successfully added to the Database."
+          }
+        ></SubmissionStatus>
       </form>
     </div>
   );

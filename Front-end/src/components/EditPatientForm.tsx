@@ -1,5 +1,7 @@
 import React, { ChangeEvent, FormEvent, useState } from "react";
 import { fhirR4 } from "@smile-cdr/fhirts";
+import { faSave } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 interface EditPatientFormProps {
   patient: fhirR4.Patient;
@@ -98,6 +100,7 @@ const EditPatientForm: React.FC<EditPatientFormProps> = ({
             type="submit"
             className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2"
           >
+            <FontAwesomeIcon icon={faSave} className="mr-2" />
             Save
           </button>
           <button
@@ -105,6 +108,7 @@ const EditPatientForm: React.FC<EditPatientFormProps> = ({
             className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
             onClick={onCancel}
           >
+            {/*<FontAwesomeIcon icon={faCancel} className="mr-2" />*/}
             Cancel
           </button>
         </div>
