@@ -5,53 +5,70 @@ management:
     web:
       exposure:
         include: "health,prometheus"
+auth0:
+  audience: medTechAPI2023
+
 spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://dev-iev30nuk0firr85e.eu.auth0.com/
   main:
     allow-circular-references: true
     #allow-bean-definition-overriding: true
   flyway:
     enabled: false
+    check-location: false
     baselineOnMigrate: true
-    fail-on-missing-locations: false
   datasource:
+    #url: 'jdbc:h2:file:./target/database/h2'
+    #url: jdbc:h2:mem:test_mem
+    #url: 'jdbc:postgresql://172.17.0.2:59243/hapi'
     url: 'jdbc:postgresql://db:5432/hapi'
+    #username: sa
     username: admin
+    #password: null
     password: admin
+    #driverClassName: org.h2.Driver
     driverClassName: org.postgresql.Driver
+    #max-active: 15
+
     # database connection pool size
     hikari:
-      maximum-pool-size: 30
+      maximum-pool-size: 10
   jpa:
     properties:
-      #### ********* ####
-      ## Both are activated to see the SQL
-      hibernate.format_sql: true
-      hibernate.show_sql: true
-      #### ********* ####
+      hibernate.format_sql: false
+      hibernate.show_sql: false
+
       #Hibernate dialect is automatically detected except Postgres and H2.
       #If using H2, then supply the value of ca.uhn.fhir.jpa.model.dialect.HapiFhirH2Dialect
       #If using postgres, then supply the value of ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgres94Dialect
+      #hibernate.dialect: ca.uhn.fhir.jpa.model.dialect.HapiFhirH2Dialect
       hibernate.dialect: ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgres94Dialect
-  #      hibernate.hbm2ddl.auto: update
-  #      hibernate.jdbc.batch_size: 20
-  #      hibernate.cache.use_query_cache: false
-  #      hibernate.cache.use_second_level_cache: false
-  #      hibernate.cache.use_structured_entries: false
-  #      hibernate.cache.use_minimal_puts: false
+      #      hibernate.hbm2ddl.auto: update
+      #      hibernate.jdbc.batch_size: 20
+      #      hibernate.cache.use_query_cache: false
+      #      hibernate.cache.use_second_level_cache: false
+      #      hibernate.cache.use_structured_entries: false
+      #      hibernate.cache.use_minimal_puts: false
 
-  ###    These settings will enable fulltext search with lucene or elastic
+      ###    These settings will enable fulltext search with lucene or elastic
+      #hibernate.search.enabled: true
       hibernate.search.enabled: false
   ### lucene parameters
-#      hibernate.search.backend.type: lucene
-#      hibernate.search.backend.analysis.configurer: ca.uhn.fhir.jpa.search.HapiHSearchAnalysisConfigurers$HapiLuceneAnalysisConfigurer
-#      hibernate.search.backend.directory.type: local-filesystem
-#      hibernate.search.backend.directory.root: target/lucenefiles
-#      hibernate.search.backend.lucene_version: lucene_current
+  #      hibernate.search.backend.type: lucene
+  #      hibernate.search.backend.analysis.configurer: ca.uhn.fhir.jpa.search.HapiHSearchAnalysisConfigurers$HapiLuceneAnalysisConfigurer
+  #      hibernate.search.backend.directory.type: local-filesystem
+  #      hibernate.search.backend.directory.root: target/lucenefiles
+  #      hibernate.search.backend.lucene_version: lucene_current
   ### elastic parameters ===> see also elasticsearch section below <===
 #      hibernate.search.backend.type: elasticsearch
 #      hibernate.search.backend.analysis.configurer: ca.uhn.fhir.jpa.search.HapiHSearchAnalysisConfigurers$HapiElasticAnalysisConfigurer
 hapi:
   fhir:
+
     ### This enables the swagger-ui at /fhir/swagger-ui/index.html as well as the /fhir/api-docs (see https://hapifhir.io/hapi-fhir/docs/server_plain/openapi.html)
     openapi_enabled: true
     ### This is the FHIR version. Choose between, DSTU2, DSTU3, R4 or R5
@@ -132,18 +149,22 @@ hapi:
       # These are allowed_origin patterns, see: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/cors/CorsConfiguration.html#setAllowedOriginPatterns-java.util.List-
       allowed_origin:
         - '*'
+
     # Search coordinator thread pool sizes
     search-coord-core-pool-size: 20
     search-coord-max-pool-size: 100
     search-coord-queue-capacity: 200
-    
+
     # comma-separated package names, will be @ComponentScan'ed by Spring to allow for creating custom Spring beans
     #custom-bean-packages:
-    
-    # comma-separated list of fully qualified interceptor classes. 
-    # classes listed here will be fetched from the Spring context when combined with 'custom-bean-packages', 
-    # or will be instantiated via reflection using an no-arg contructor; then registered with the server  
-    #custom-interceptor-classes:  
+
+    # comma-separated list of fully qualified interceptor classes.
+    # classes listed here will be fetched from the Spring context when combined with 'custom-bean-packages',
+    # or will be instantiated via reflection using an no-arg contructor; then registered with the server
+    custom-interceptor-classes: ca.uhn.fhir.jpa.starter.Security.PatientAndAdminAuthorizationInterceptor
+
+
+
 
     # Threadpool size for BATCH'ed GETs in a bundle.
     #    bundle_batch_pool_size: 10
@@ -168,7 +189,6 @@ hapi:
         server_address: 'http://localhost:8080/fhir'
         refuse_to_fetch_third_party_urls: false
         fhir_version: R4
-      ### TODO: Global? brauchen wir es eigentlich?
       global:
         name: Global Tester
         server_address: "http://hapi.fhir.org/baseR4"
