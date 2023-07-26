@@ -1,6 +1,6 @@
 # Klinisches Anwendungsprojekt
 
-Welcome to the Klinisches Anwendungsprojekt (Clinical Application Project) server repository! This project comprises a server and a client application designed to streamline the testing of clinical data resources. The server is built upon the open-source [Hapi-FHIR](https://hapifhir.io/) project and incorporates bearer token authentication for enhanced security.
+Welcome to the Klinisches Anwendungsprojekt (Clinical Application Project)! This project comprises a server and a client application designed to streamline the testing of clinical data resources. The server is built upon the open-source [Hapi-FHIR](https://hapifhir.io/) project and incorporates bearer token authentication for enhanced security.
 
 ## Table of Contents
 
