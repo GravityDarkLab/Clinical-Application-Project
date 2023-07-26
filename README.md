@@ -35,11 +35,14 @@ The `server` directory contains the Hapi-FHIR-based server, which serves as the 
 
 To get started with the Klinisches Anwendungsprojekt, follow these steps:
 
-1. **Clone the Repository:** Begin by cloning this repository to your local machine.
+1. **Clone the Repository:** Begin by cloning this repository to your local machine using the following command:
+   ```
+   git clone https://github.com/GravityDarkLab/Clinical-Application-Project.git
+   ```
 
 2. **Configure the Server:** Navigate to the `server` directory and follow the provided instructions to set up and configure the server. Ensure that you have all the required dependencies installed.
 
-3. Alternatively, you can download the built and ready-to-use server directly from [here](https://drive.google.com/drive/folders/1pery1-VEiU5qInV35zOIW4Vb3jjmPfdU?usp=drive_link) and follow the instructions in the Readme.
+3. **Alternatively:** you can download the built and ready-to-use server directly from [here](https://drive.google.com/drive/folders/1pery1-VEiU5qInV35zOIW4Vb3jjmPfdU?usp=drive_link) and follow the instructions in the Readme.
 
 4. **Build the PatientGenerator:** Next, go to the `PatientGenerator-client` directory. If needed, update the configurations to match your server's endpoint. Then, build the client application and you can now start testing the server's response to various resources and HTTP methods.
 
