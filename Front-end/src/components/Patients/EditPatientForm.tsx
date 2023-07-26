@@ -15,40 +15,73 @@ const EditPatientForm: React.FC<EditPatientFormProps> = ({
   onCancel,
 }) => {
   const [editedPatient, setEditedPatient] = useState<fhirR4.Patient>(patient);
-
-  //TODO: Upgrade
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
     // Extract the name and value from the event target (input field)
-    const { name, value } = e.target;
+    const { name, value, files } = e.target;
+    // Handle BirthDate field differently
     if (name === "birthdate") {
-      // Handle BirthDate field differently
       setEditedPatient((prevPatient) => ({
         ...prevPatient,
         birthDate: value,
       }));
+      // Handle phone and email fields
+    } else if (name === "phone" || name === "email") {
+      setEditedPatient((prevPatient) => {
+        const updatedPatient = { ...prevPatient };
+        // Get the telecom array or initialize it as an empty array if undefined
+        const telecom = updatedPatient.telecom || [];
+        // Find the index of the contact point with the same system as the name
+        const contactPointIndex = telecom.findIndex(
+          (contactPoint) => contactPoint.system === name
+        );
+        // If an existing contact point is found, update its value
+        if (contactPointIndex !== -1) {
+          telecom[contactPointIndex].value = value;
+          // If no existing contact point is found, add a new contact point
+        } else {
+          telecom.push({ system: name, value: value });
+        }
+        // Update the telecom array in the updatedPatient object
+        updatedPatient.telecom = telecom;
+
+        return updatedPatient;
+      });
+    } else if (name === "photo" && files && files.length > 0) {
+      const file = files[0];
+      setPhotoFile(file);
     } else {
-      // Update the editedPatient state
       setEditedPatient((prevPatient) => ({
-        // Create a new object with the same properties as prevPatient
         ...prevPatient,
-        // Update the name property with the new value
-        name: [
-          // Create a new name array with the updated value
-          {
-            // Copy the existing name object or create a new one if it doesn't exist
-            ...prevPatient.name?.[0],
-            // Update the specific field (identified by the name) with the new value
-            [name]: value,
-          },
-        ],
+        [name]: value,
       }));
     }
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    await onSave(e, editedPatient);
+
+    const patientData = { ...editedPatient };
+
+    if (photoFile) {
+      const photoAttachment: fhirR4.Attachment = {
+        contentType: photoFile.type,
+        data: "",
+        id: patient.photo?.[0].id,
+      };
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          photoAttachment.data = reader.result.split(",")[1] || "";
+          patientData.photo = [photoAttachment];
+          onSave(e, patientData);
+        }
+      };
+      reader.readAsDataURL(photoFile);
+    } else {
+      onSave(e, patientData);
+    }
   };
 
   return (
@@ -90,6 +123,45 @@ const EditPatientForm: React.FC<EditPatientFormProps> = ({
             id="birthdate"
             name="birthdate"
             value={editedPatient.birthDate || ""}
+            onChange={handleInputChange}
+            className="w-full border border-gray-300 rounded px-3 py-2 mt-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="phone" className="text-lg font-medium">
+            Phone:
+          </label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            value={editedPatient.telecom?.[0]?.value || ""}
+            onChange={handleInputChange}
+            className="w-full border border-gray-300 rounded px-3 py-2 mt-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="email" className="text-lg font-medium">
+            E-Mail:
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={editedPatient.telecom?.[1]?.value || ""}
+            onChange={handleInputChange}
+            className="w-full border border-gray-300 rounded px-3 py-2 mt-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="photo" className="text-lg font-medium">
+            Photo:
+          </label>
+          <input
+            type="file"
+            id="photo"
+            name="photo"
+            accept="image/*"
             onChange={handleInputChange}
             className="w-full border border-gray-300 rounded px-3 py-2 mt-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />

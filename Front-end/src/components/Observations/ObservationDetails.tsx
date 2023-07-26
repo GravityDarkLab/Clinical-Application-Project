@@ -1,21 +1,21 @@
 import { useState, useEffect, FormEvent } from "react";
 import { useParams } from "react-router-dom";
 import { fhirR4 } from "@smile-cdr/fhirts";
-import { RenderObservationPhotos } from "./utils";
-import HomeButton from "./HomeButton";
+import { RenderObservations } from "../Utils/utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faSave, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import EditObservationForm from "./EditObservationForm";
-import BundleEntry from "./BundleEntry";
+import BundleEntry from "../Utils/BundleEntry";
+import { useAuth0 } from "@auth0/auth0-react";
+import Banner from "../elements/Banner";
 
 const ObservationDetails = () => {
   const { observationId } = useParams();
   const [observation, setObservation] = useState<fhirR4.Observation>();
   const [media, setMedia] = useState<fhirR4.Media[]>([]);
-
+  const { getAccessTokenSilently } = useAuth0();
   const [isEditMode, setIsEditMode] = useState(false);
-  const [searchText, setSearchText] = useState("");
   const [editedObservation, setEditedObservation] =
     useState<fhirR4.Observation>({} as fhirR4.Observation);
 
@@ -23,48 +23,77 @@ const ObservationDetails = () => {
 
   useEffect(() => {
     fetchObservation();
-  }, [observationId]);
+  }, [observationId, getAccessTokenSilently]);
 
+  /**
+   * Fetches the Observation data and associated Media based on the given observationId.
+   */
   const fetchObservation = async () => {
     try {
-      console.log(`http://localhost:8080/fhir/Observation/${observationId}`);
+      const token = await getAccessTokenSilently();
       const response = await fetch(
-        `http://localhost:8080/fhir/Observation/${observationId}`
+        `http://localhost:8080/fhir/Observation/${observationId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-      const observationData = await response.json();
 
-      console.log(observationData);
-      setObservation(observationData);
+      // Check if the fetch request was successful
+      if (response.ok) {
+        // Parse the response JSON to get the Observation data
+        const observationData = await response.json();
 
-      const media_array: fhirR4.Media[] = [];
+        // Set the Observation state
+        setObservation(observationData);
 
-      if (observationData) {
-        const array_derivedFrom = observationData.derivedFrom;
+        // Create an array to store the associated Media
+        const mediaArray: fhirR4.Media[] = [];
 
-        console.log(array_derivedFrom);
-        if (array_derivedFrom) {
-          for (let i = 0; i < array_derivedFrom.length; ++i) {
+        // Check if the Observation has derivedFrom references
+        if (observationData && observationData.derivedFrom) {
+          // Iterate over each derivedFrom reference
+          for (const derivedFrom of observationData.derivedFrom) {
             try {
+              // Fetch the Media data based on the derivedFrom identifier
               const responseMedia = await fetch(
-                `http://localhost:8080/fhir/Media?identifier=${array_derivedFrom[i].identifier?.value}`
+                `http://localhost:8080/fhir/Media?identifier=${derivedFrom.identifier?.value}`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
               );
 
-              const dataMedia = await responseMedia.json();
-              const mediaData = dataMedia.entry.map(
-                (entry: BundleEntry) => entry.resource
-              );
+              // Check if the fetch request for Media was successful
+              if (responseMedia.ok) {
+                // Parse the response JSON to get the Media data
+                const dataMedia = await responseMedia.json();
 
-              media_array.push(mediaData[0]);
-              console.log(mediaData);
+                // Get the first Media resource from the response
+                const mediaData = dataMedia.entry.map(
+                  (entry: BundleEntry) => entry.resource
+                );
+
+                // Add the Media to the array if it exists
+                if (mediaData.length > 0) {
+                  mediaArray.push(mediaData[0]);
+                }
+              } else {
+                console.error("Failed to fetch Media:", responseMedia.status);
+              }
             } catch (error) {
               console.error("Error fetching Media:", error);
             }
           }
         }
-      }
 
-      console.log(media_array);
-      setMedia(media_array);
+        // Set the Media state
+        setMedia(mediaArray);
+      } else {
+        console.error("Failed to fetch Observation:", response.status);
+      }
     } catch (error) {
       console.error("Error fetching Observation:", error);
     }
@@ -91,11 +120,13 @@ const ObservationDetails = () => {
   ) => {
     event.preventDefault();
     try {
+      const token = await getAccessTokenSilently();
       const response = await fetch(
         `http://localhost:8080/fhir/Observation/${observationId}`,
         {
           method: "PUT",
           headers: {
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(editedObservation),
@@ -113,23 +144,74 @@ const ObservationDetails = () => {
     }
   };
 
-  // Function to handle DELETE
-
+  /**
+   * Function to handle the deletion of an Observation and its associated Media.
+   */
   const handleDelete = async () => {
     try {
+      const token = await getAccessTokenSilently();
+
+      // Fetch the Observation first
       const response = await fetch(
         `http://localhost:8080/fhir/Observation/${observationId}`,
         {
-          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
-      if (response.ok) {
-        navigate(`/patient`);
-      } else {
-        console.error("Failed to delete patient");
+
+      // Check if the fetch request for Observation was successful
+      if (!response.ok) {
+        console.error("Failed to fetch Observation:", response.status);
+        return;
       }
+
+      // Parse the response JSON to get the Observation data
+      const observationData = await response.json();
+
+      // Delete the associated Media (derivedFrom) if it exists
+      if (observationData && observationData.derivedFrom) {
+        // Iterate over each derivedFrom reference
+        for (const derivedFrom of observationData.derivedFrom) {
+          try {
+            // Delete the Media based on the derivedFrom reference
+            await fetch(
+              `http://localhost:8080/fhir/Media/${derivedFrom.reference}`,
+              {
+                method: "DELETE",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+          } catch (error) {
+            console.error("Error deleting Media:", error);
+          }
+        }
+      }
+
+      // Delete the Observation
+      const deleteResponse = await fetch(
+        `http://localhost:8080/fhir/Observation/${observationId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Check if the delete request for Observation was successful
+      if (!deleteResponse.ok) {
+        console.error("Failed to delete Observation:", deleteResponse.status);
+        return;
+      }
+
+      // Navigate to the desired page after successful deletion
+      navigate(-1);
     } catch (error) {
-      console.error("Error deleting patient:", error);
+      console.error("Error deleting Observation:", error);
     }
   };
 
@@ -188,7 +270,7 @@ const ObservationDetails = () => {
         </div>
         <div className="mt-4">
           <span className="font-semibold">Attachments:</span>{" "}
-          <RenderObservationPhotos media={media}></RenderObservationPhotos>
+          {<RenderObservations media={media}></RenderObservations>}
         </div>
         {
           <div className="flex justify-center mt-4">
@@ -214,14 +296,7 @@ const ObservationDetails = () => {
 
   return (
     <div>
-      <div>
-        <HomeButton />
-      </div>
-      <div className="flex justify-center h-auto p-10 bg-sky-800 text-4xl text-white mb-10 overflow-x-auto">
-        <div className="max-w-full md:max-w-[80%] lg:max-w-[70%]">
-          {"Observation " + observation?.id}
-        </div>
-      </div>
+      <Banner>{"Observation " + observation?.id}</Banner>
       <div className="flex justify-center">{renderObservationDetails()}</div>
     </div>
   );

@@ -1,11 +1,18 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { fhirR4 } from "@smile-cdr/fhirts";
-import { filterResources, sortResources } from "./utils";
+import {
+  filterResources,
+  sortResources,
+  getDisplayTextForCode,
+  displayReferenceRange,
+} from "../Utils/utils";
 import { useNavigate } from "react-router-dom";
-import BundleEntry from "./BundleEntry";
+import BundleEntry from "../Utils/BundleEntry";
+import { useAuth0 } from "@auth0/auth0-react";
+import Banner from "../elements/Banner";
 
-const Observations = () => {
+const PatientObservationsList = () => {
   const { patientId } = useParams();
   const [media, setMedia] = useState<fhirR4.Observation[]>([]);
   const [searchText, setSearchText] = useState("");
@@ -13,12 +20,13 @@ const Observations = () => {
   const [sortAttribute, setSortAttribute] = useState("");
   const [mediaPerPage, setMediaPerPage] = useState(20);
   const [offsetMediaPerPage, setoffsetMediaPerPage] = useState(0);
+  const { getAccessTokenSilently } = useAuth0();
 
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchObservation();
-  }, [patientId, mediaPerPage, offsetMediaPerPage]);
+  }, [patientId, mediaPerPage, offsetMediaPerPage, getAccessTokenSilently]);
 
   const handleClickAddObservation = async (patientId: string | undefined) => {
     if (patientId) {
@@ -50,12 +58,18 @@ const Observations = () => {
     setSortAttribute(event.target.value);
   };
   const fetchObservation = async () => {
+    const token = await getAccessTokenSilently();
     try {
       const response = await fetch(
-        `http://localhost:8080/fhir/Observation?subject=${patientId}&_count=${mediaPerPage}&_offset=${offsetMediaPerPage}`
+        `http://localhost:8080/fhir/Observation?subject=${patientId}&_count=${mediaPerPage}&_offset=${offsetMediaPerPage}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       const data = await response.json();
-      const patientsData = data.entry.map(
+      const patientsData = data?.entry?.map(
         (entry: BundleEntry) => entry.resource
       );
 
@@ -95,6 +109,7 @@ const Observations = () => {
 
   return (
     <div>
+      <Banner>All related Observations</Banner>
       <div className="flex justify-center">
         <h1 className="text-2xl font-bold m-4">Patient Media</h1>
 
@@ -115,8 +130,8 @@ const Observations = () => {
             <option value="">Search by</option>
             <option value="identifier">Identifier</option>
             <option value="status">Status</option>
-            <option value="type">Type of Media</option>
-            <option value="dateTime">Date Time</option>
+            <option value="type">Type</option>
+            <option value="dateTime">Issue date</option>
             <option value="bodySite">Body Site</option>
             {/* Add options for other attributes */}
           </select>
@@ -128,8 +143,8 @@ const Observations = () => {
             <option value="">Sort by</option>
             <option value="identifier">Identifier</option>
             <option value="status">Status</option>
-            <option value="type">Type of Media</option>
-            <option value="dateTime">Date Time</option>
+            <option value="type">Type</option>
+            <option value="dateTime">Issue date</option>
             <option value="bodySite">Body Site</option>
             {/* Add options for other attributes */}
           </select>
@@ -190,27 +205,28 @@ const Observations = () => {
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
+        <table className="w-full border-collapse border">
           <thead>
-            <tr>
-              <th className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5">
+            <tr className="bg-gray-100">
+              <th className="p-4 font-semibold text-center border">
                 Identifier
               </th>
-              <th className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5">
-                Status
+              <th className="p-4 font-semibold text-center border">Status</th>
+              <th className="p-4 font-semibold text-center border">Type</th>
+              <th className="p-4 font-semibold text-center whitespace-nowrap border">
+                Issue Date
               </th>
-              <th className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5">
-                Type
-              </th>
-              <th className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5">
-                Date Time
-              </th>
-              <th className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5">
+              <th className="p-4 font-semibold text-center whitespace-nowrap border">
                 Body Site
               </th>
-              <th className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5">
-                Note
+              <th className="p-4 font-semibold text-center border">
+                Interpretation
               </th>
+              <th className="p-4 font-semibold text-center border">Range</th>
+              <th className="p-4 font-semibold text-center border">
+                Performer
+              </th>
+              <th className="p-4 font-semibold text-center border">Note</th>
             </tr>
           </thead>
           <tbody>
@@ -220,7 +236,7 @@ const Observations = () => {
                 className="cursor-pointer hover:bg-gray-100"
                 onClick={() => handleRowClick(observation.id)}
               >
-                <td className="p-4 font-mono md:font-mono text-lg/2 md:text-lg/2 whitespace-nowrap">
+                <td className="p-4 font-mono md:font-mono text-lg/2 md:text-lg/2 border whitespace-nowrap">
                   {observation.identifier?.[0]?.value === undefined ? (
                     <div className="flex items-center justify-center h-full">
                       Nun
@@ -229,28 +245,42 @@ const Observations = () => {
                     observation.identifier?.[0]?.value
                   )}
                 </td>
-                <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5">
+                <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5 border">
                   {observation.status}
                 </td>
-                <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5">
-                  {observation.category?.[0]?.coding?.[0]?.code}
+                <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5 border">
+                  {observation.category?.[0]?.coding?.[0]?.code || "-"}
                 </td>
-                <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5">
-                  {observation.effectiveDateTime}
+                <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5 border">
+                  {observation.issued}
                 </td>
-                <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5 whitespace-nowrap">
-                  {observation.bodySite?.text}
+                <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5 border whitespace-nowrap">
+                  {observation.bodySite?.text || "-"}
                 </td>
-                <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5 whitespace-nowrap">
-                  {observation.note?.[0]?.text}
+                <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5 border whitespace-nowrap">
+                  {observation.interpretation?.[0]?.coding?.[0]?.display
+                    ? getDisplayTextForCode(
+                        observation.interpretation?.[0]?.coding?.[0]?.display
+                      )
+                    : "-"}
+                </td>
+                <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5 border whitespace-nowrap">
+                  {displayReferenceRange(observation.referenceRange)}
+                </td>
+                <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5 border whitespace-nowrap">
+                  {observation.performer?.[0]?.display || "-"}
+                </td>
+                <td className="p-4 font-mono md:font-mono text-lg/5 md:text-lg/5 border whitespace-nowrap">
+                  {observation.note?.[0]?.text || "-"}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <div className="flex justify-center mt-4">{/* Pagination buttons */}</div>
     </div>
   );
 };
 
-export default Observations;
+export default PatientObservationsList;

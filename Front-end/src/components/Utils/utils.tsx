@@ -19,6 +19,9 @@ export function filterResources<T>(
   filterAttribute: string,
   searchText: string
 ): T[] {
+  if (!resources) {
+    return [];
+  }
   const filteredResources = resources.filter((resource: any) => {
     if (filterAttribute === "identifier") {
       return resource.identifier?.[0]?.value
@@ -54,7 +57,7 @@ export function filterResources<T>(
         ?.toLowerCase()
         .includes(searchText.toLowerCase());
     } else {
-      return null;
+      return [];
     }
   });
 
@@ -72,6 +75,9 @@ export const sortResources = <T extends { [key: string]: any }>(
   resources: T[],
   sortAttribute: string
 ) => {
+  if (!resources) {
+    return [];
+  }
   const getValue = (resource: T) => {
     switch (sortAttribute) {
       case "identifier":
@@ -90,6 +96,8 @@ export const sortResources = <T extends { [key: string]: any }>(
         return resource.name?.[0]?.family;
       case "birthDate":
         return resource.birthDate;
+      case "creationDate":
+        return resource.id;
       default:
         return undefined;
     }
@@ -116,7 +124,15 @@ export const sortResources = <T extends { [key: string]: any }>(
  * @returns {JSX.Element} - The rendered component.
  */
 
-const RenderPatientPhotos = ({ patient }: { patient: fhirR4.Patient }) => {
+const RenderPatientPhotos = ({
+  patient,
+  w,
+  h,
+}: {
+  patient: fhirR4.Patient;
+  w: string;
+  h: string;
+}) => {
   const [selectedPhoto, setSelectedPhoto] = useState<fhirR4.Attachment | null>(
     null
   );
@@ -138,9 +154,10 @@ const RenderPatientPhotos = ({ patient }: { patient: fhirR4.Patient }) => {
           onClick={() => handlePhotoClick(photo)}
         >
           <img
-            src={getCachedPhotoUrl(photo)}
+            src={`data:${photo.contentType};base64,${photo.data}`}
             alt="Patient Attachment"
             className="object-cover w-full h-full"
+            style={{ maxWidth: w, maxHeight: h }}
           />
         </div>
       ))}
@@ -150,7 +167,7 @@ const RenderPatientPhotos = ({ patient }: { patient: fhirR4.Patient }) => {
           onClick={() => setSelectedPhoto(null)}
         >
           <img
-            src={getCachedPhotoUrl(selectedPhoto)}
+            src={`data:${selectedPhoto.contentType};base64,${selectedPhoto.data}`}
             alt="Latest observation"
             className="max-w-full max-h-full"
           />
@@ -158,6 +175,24 @@ const RenderPatientPhotos = ({ patient }: { patient: fhirR4.Patient }) => {
       )}
     </div>
   );
+};
+
+/**
+ * Renders the patient photos.
+ *
+ * @param {fhirR4.Patient} patient - The patient object containing photo information.
+ * @returns {JSX.Element | string} - JSX element representing the patient photos or a string indicating no attachment available.
+ */
+
+export const renderPatientPhotos = (
+  patient: fhirR4.Patient,
+  maxW: string,
+  maxH: string
+) => {
+  if (!patient.photo || patient.photo.length === 0) {
+    return "No attachment available";
+  }
+  return <RenderPatientPhotos patient={patient} w={maxW} h={maxH} />;
 };
 
 /**
@@ -186,7 +221,7 @@ const RenderObservationPhoto = ({ media }: { media: fhirR4.Media }) => {
         onClick={() => handlePhotoClick(media.content)}
       >
         <img
-          src={getCachedPhotoUrl(media.content)}
+          src={`data:${media.content.contentType};base64,${media.content.data}`}
           alt="Patient Attachment"
           className="object-cover w-full h-full"
         />
@@ -198,7 +233,7 @@ const RenderObservationPhoto = ({ media }: { media: fhirR4.Media }) => {
           onClick={() => setSelectedPhoto(null)}
         >
           <img
-            src={getCachedPhotoUrl(selectedPhoto)}
+            src={`data:${selectedPhoto.contentType};base64,${selectedPhoto.data}`}
             alt="Latest observation"
             className="max-w-full max-h-full"
           />
@@ -214,11 +249,7 @@ const RenderObservationPhoto = ({ media }: { media: fhirR4.Media }) => {
  * @param {fhirR4.Patient} patient - The patient object containing photo information.
  * @returns {JSX.Element | string} - JSX element representing the patient photos or a string indicating no attachment available.
  */
-export const RenderObservationPhotos = ({
-  media,
-}: {
-  media: fhirR4.Media[];
-}) => {
+export const RenderObservations = ({ media }: { media: fhirR4.Media[] }) => {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number>(0);
 
   const handlePreviousClick = () => {
@@ -259,41 +290,6 @@ export const RenderObservationPhotos = ({
 };
 
 /**
- * Renders the patient photos.
- *
- * @param {fhirR4.Patient} patient - The patient object containing photo information.
- * @returns {JSX.Element | string} - JSX element representing the patient photos or a string indicating no attachment available.
- */
-
-export const renderPatientPhotos = (patient: fhirR4.Patient) => {
-  if (!patient.photo || patient.photo.length === 0) {
-    return "No attachment available";
-  }
-  return <RenderPatientPhotos patient={patient} />;
-};
-/**
- * Gets the cached photo URL or creates a new cache entry.
- *
- * @param {fhirR4.Attachment} photo - The photo object containing data and content type.
- * @returns {string} - The URL of the cached photo or an empty string if not available.
- */
-
-const getCachedPhotoUrl = (photo: fhirR4.Attachment) => {
-  if (!photo || !photo.data) return "";
-
-  const cacheKey = `${photo.id}-${photo.data}`;
-  const cachedImage = localStorage.getItem(cacheKey);
-
-  if (cachedImage) {
-    return cachedImage;
-  } else {
-    const image = `data:${photo.contentType};base64,${photo.data}`;
-    localStorage.setItem(cacheKey, image);
-    return image;
-  }
-};
-
-/**
  * Generates the patient address element based on the address data.
  *
  * @param patient - The FHIR R4 Patient resource.
@@ -322,180 +318,86 @@ export const generatePatientAddress = (patient: fhirR4.Patient) => {
   return "No address available";
 };
 
-/*
- * POST
+/**
+ * Sends a POST request to the specified URL with the provided data and headers.
+ *
+ * @param url - The URL to send the POST request to.
+ * @param data - The data to include in the request body.
+ * @param headers - Additional headers to include in the request.
+ * @returns A Promise that resolves to the JSON response if the request is successful, or throws an error if the request fails.
  */
-
-export const post = async (url: string, data: any) => {
+export const post = async (
+  resource: string,
+  data: any,
+  token: string,
+  handleStatus: (status: "success" | "failure" | null) => void,
+  headers: any = {}
+) => {
   try {
+    const url = `http://localhost:8080/fhir/${resource}`;
     const response = await fetch(url, {
       method: "POST",
       headers: {
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
+        ...headers,
       },
       body: JSON.stringify(data),
     });
 
     if (response.ok) {
-      return await response.json();
+      const responseData = await response.json();
+      handleStatus("success");
+      return responseData;
     } else {
-      throw new Error("Request failed");
+      throw new Error(`Request failed: ${response.statusText}`);
     }
   } catch (error) {
     console.error("Error:", error);
+    handleStatus("failure");
     throw error;
   }
 };
 
-/**
- * @deprecated Use `filterResources` instead.
- */
-export const filterPatients = (
-  patients: fhirR4.Patient[],
-  filterAttribute: string,
-  searchText: string
-) => {
-  const filteredPatients = patients.filter((patient) => {
-    if (filterAttribute === "name") {
-      return patient.name?.[0]?.given?.[0]
-        .toLowerCase()
-        .includes(searchText.toLowerCase());
-    } else if (filterAttribute === "family") {
-      return patient.name?.[0].family
-        ?.toLowerCase()
-        .includes(searchText.toLowerCase());
-    } else if (filterAttribute === "birthDate") {
-      return patient.birthDate
-        ?.toLowerCase()
-        .includes(searchText.toLowerCase());
-    } else if (filterAttribute === "identifier") {
-      return patient.identifier?.[0].value
-        ?.toString()
-        .toLowerCase()
-        .includes(searchText.toLowerCase());
-    } else {
-      return null;
-    }
-  });
-  return filteredPatients;
-};
-
-/**
- * @deprecated Use `filterResources` instead.
- */
-export const filterObservation = (
-  observations: fhirR4.Observation[],
-  filterAttribute: string,
-  searchText: string
-) => {
-  const filteredMedia = observations.filter((observation) => {
-    if (filterAttribute === "identifier") {
-      return observation.identifier?.[0]?.value
-        ?.toLowerCase()
-        .includes(searchText.toLowerCase());
-    } else if (filterAttribute === "status") {
-      return observation.status
-        ?.toLowerCase()
-        .includes(searchText.toLowerCase());
-    } else if (filterAttribute === "code") {
-      return observation.code?.coding?.[0]?.code
-        ?.toLowerCase()
-        .includes(searchText.toLowerCase());
-    } else if (filterAttribute === "dateTime") {
-      return observation.effectiveDateTime
-        ?.toString()
-        .toLowerCase()
-        .includes(searchText.toLowerCase());
-    } else if (filterAttribute === "bodySite") {
-      return observation.bodySite?.coding?.[0]?.code
-        ?.toString()
-        .toLowerCase()
-        .includes(searchText.toLowerCase());
-    } else {
-      return null;
-    }
-  });
-  return filteredMedia;
-};
-
-/**
- * @deprecated Use `sortResources` instead.
- */
-export const sortObservation = (
-  observations: fhirR4.Observation[],
-  sortAttribute: string
-) => {
-  const getValue = (observation: fhirR4.Observation) => {
-    switch (sortAttribute) {
-      case "identifier":
-        return observation.identifier?.[0].value;
-      case "status":
-        return observation.status;
-      case "code":
-        return observation.code?.coding?.[0]?.code;
-      case "dateTime":
-        return observation.effectiveDateTime;
-      case "bodySite":
-        return observation.bodySite?.coding?.[0]?.code;
-      // Add cases for other attributes you want to sort by
-      default:
-        return undefined;
-    }
+export const getDisplayTextForCode = (code: string): string => {
+  // Define a mapping of interpretation codes to display text
+  const interpretationMapping: Record<string, string> = {
+    H: "High",
+    L: "Low",
+    N: "Normal",
+    R: "Resistant",
+    S: "Susceptible",
+    U: "Unable to Determine",
   };
 
-  return observations.sort(
-    (
-      observationOne: fhirR4.Observation,
-      observationTwo: fhirR4.Observation
-    ) => {
-      const imageOneValue = getValue(observationOne);
-      const imageTwoValue = getValue(observationTwo);
+  // Check if the code exists in the mapping
+  if (interpretationMapping.hasOwnProperty(code)) {
+    return interpretationMapping[code];
+  }
 
-      if (imageOneValue === undefined || imageTwoValue === undefined) {
-        return 0;
-      }
-
-      return imageOneValue.localeCompare(imageTwoValue);
-    }
-  );
+  // If the code is not found, return the code itself
+  return code;
 };
 
-/**
- * @deprecated Use `sortResources` instead.
- */
-export const sortPatients = (
-  patients: fhirR4.Patient[],
-  sortAttribute: string
-) => {
-  /**
-   * Gets the value of the specified attribute for a given patient.
-   * @param patient - The patient object.
-   * @returns The value of the attribute or undefined if not found.
-   */
-  const getValue = (patient: fhirR4.Patient) => {
-    switch (sortAttribute) {
-      case "name":
-        return patient.name?.[0]?.given?.[0];
-      case "birthDate":
-        return patient.birthDate;
-      case "family":
-        return patient.name?.[0]?.family;
-      // Add cases for other attributes you want to sort by
-      default:
-        return undefined;
-    }
-  };
+export const displayReferenceRange = (
+  referenceRange: fhirR4.ObservationReferenceRange[] | undefined
+): string => {
+  if (!referenceRange || referenceRange.length === 0) {
+    return "-";
+  }
 
-  return patients.sort(
-    (patientOne: fhirR4.Patient, patientTwo: fhirR4.Patient) => {
-      const patientOneValue = getValue(patientOne);
-      const patientTwoValue = getValue(patientTwo);
+  const lowValue = referenceRange[0].low?.value;
+  const lowUnit = referenceRange[0].low?.unit;
+  const lowCode = referenceRange[0].low?.code;
+  const highValue = referenceRange[0].high?.value;
+  const highUnit = referenceRange[0].high?.unit;
+  const highCode = referenceRange[0].high?.code;
 
-      if (patientOneValue === undefined || patientTwoValue === undefined) {
-        return 0;
-      }
+  if (lowValue && highValue && lowUnit && highUnit) {
+    const formattedLow = `${lowValue} ${lowUnit} (${lowCode})`;
+    const formattedHigh = `${highValue} ${highUnit} (${highCode})`;
+    return `${formattedLow} - ${formattedHigh}`;
+  }
 
-      return patientOneValue.localeCompare(patientTwoValue);
-    }
-  );
+  return "";
 };

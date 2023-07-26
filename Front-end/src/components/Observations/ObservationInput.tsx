@@ -2,14 +2,19 @@ import React, { useState } from "react";
 import { fhirR4 } from "@smile-cdr/fhirts";
 import { useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
-import HomeButton from "./HomeButton";
-import SubmissionStatus from "./SubmissonStatus";
+import SubmissionStatus from "../elements/SubmissonStatus";
+import { useAuth0 } from "@auth0/auth0-react";
+import Banner from "../elements/Banner";
+import { post } from "../Utils/utils";
 
 const ObservationInput: React.FC = () => {
   // State variables
-  const { patientId } = useParams();
-  const [selectedFiles, setSelectedFiles] = useState<string[] | null>(null);
-  const [submissionStatus, setSubmissionStatus] = useState<string | null>(null);
+  const { patientId } = useParams<{ patientId: string }>();
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [submissionStatus, setSubmissionStatus] = useState<
+    "success" | "failure" | null
+  >(null);
+  const { getAccessTokenSilently } = useAuth0();
 
   /**
    * Handles the form submission event.
@@ -17,19 +22,106 @@ const ObservationInput: React.FC = () => {
    * POST to "http://localhost:8080/fhir/Media"
    * @param e - The form submission event.
    */
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Create a new identifier for the Media
-    const newIdentifier = new fhirR4.Identifier();
-    newIdentifier.value = (
-      e.currentTarget.elements.namedItem("identifier") as HTMLInputElement
-    ).value;
+    const formData = new FormData(e.currentTarget);
 
-    //define the status of the Media
-    let statusValueMedia = (
-      e.currentTarget.elements.namedItem("statusMedia") as HTMLInputElement
-    ).value;
+    const newIdentifierValue = formData.get("identifier") as string;
+    const statusObservationValue = formData.get("statusObservation") as string;
+    const categoryValue = formData.get("category") as string;
+    const issueDateValue = formData.get("issueDate") as string;
+    const bodySiteValue = formData.get("bodySite") as string;
+    const performerValue = formData.get("performer") as string;
+    const lowValue = parseFloat(formData.get("low") as string);
+    const highValue = parseFloat(formData.get("high") as string);
+    const rangeUnitValue = formData.get("unit") as string;
+    const interpretationValue = formData.get("interpretation") as string;
+    const noteValue = formData.get("note") as string;
+    const typeOfMediaValue = formData.get("typeOfMedia") as string;
+    const statusMediaValue = formData.get("statusMedia") as string;
+    const loincCodeValue = formData.get("loinc") as string;
+
+    //define the patient reference
+    const newPatientReference = new fhirR4.Reference();
+    newPatientReference.type = "Patient";
+    newPatientReference.reference = "Patient/" + patientId;
+
+    //Identifier
+    const newIdentifier = new fhirR4.Identifier();
+    newIdentifier.value = newIdentifierValue;
+    //Observation Status
+    const statusObservation: fhirR4.Observation.StatusEnum | undefined = [
+      "registered",
+      "preliminary",
+      "final",
+    ].includes(statusObservationValue)
+      ? (statusObservationValue as fhirR4.Observation.StatusEnum)
+      : "preliminary";
+
+    //Category
+    const observationCategory = new fhirR4.CodeableConcept();
+    const newCategoryCoding = new fhirR4.Coding();
+    newCategoryCoding.system =
+      "http://hl7.org/fhir/ValueSet/observation-category";
+    newCategoryCoding.code = categoryValue;
+    observationCategory.coding = [newCategoryCoding];
+    //Issue Date
+    const issueDate = new Date(issueDateValue).toISOString();
+    //Body site
+    const bodySite = new fhirR4.CodeableConcept();
+    const bodySiteCoding = new fhirR4.Coding();
+    bodySiteCoding.system = "http://hl7.org/fhir/ValueSet/body-site";
+    bodySiteCoding.code = bodySiteValue;
+    bodySite.coding = [bodySiteCoding];
+    bodySite.text = bodySiteValue;
+
+    //Performer {observation.performer?.[0]?.display || "-"}
+    const performer = new fhirR4.Reference();
+    performer.type = "Practitioner"; // fhirR4.Practitioner | fhirR4.PractitionerRole | fhirR4.Organization | fhirR4.CareTeam | fhirR4.Patient | fhirR4.RelatedPerson;
+    //performer.reference = performerValue; // Set the performer reference value
+    performer.display = performerValue;
+
+    //Range
+    const range = new fhirR4.ObservationReferenceRange();
+    range.low = new fhirR4.Quantity();
+    range.low.value = lowValue;
+    range.low.system = "";
+    range.low.unit = rangeUnitValue;
+    range.low.code = rangeUnitValue;
+    range.high = new fhirR4.Quantity();
+    range.high.value = highValue; // Assign the high value
+    range.high.system = "";
+    range.high.unit = rangeUnitValue;
+    range.high.code = rangeUnitValue;
+
+    //Interpretation
+    const interpretationSystem =
+      "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation";
+    const interpretationCode: string = interpretationValue[0].toUpperCase();
+    const interpretationDisplay: string = interpretationValue;
+    const interpretation = new fhirR4.CodeableConcept();
+    const interpretationCoding = new fhirR4.Coding();
+    interpretationCoding.system = interpretationSystem;
+    interpretationCoding.code = interpretationCode;
+    interpretationCoding.display = interpretationDisplay;
+    interpretation.coding = [interpretationCoding];
+
+    //Note
+    const note = new fhirR4.Annotation();
+    note.text = noteValue;
+    note.time = new Date().toISOString();
+
+    //Type of media
+    const typeOfMedia = new fhirR4.CodeableConcept();
+    const typeOfMediaCoding = new fhirR4.Coding();
+    typeOfMediaCoding.system =
+      "http://terminology.hl7.org/CodeSystem/media-type";
+    typeOfMediaCoding.code = typeOfMediaValue;
+    typeOfMedia.coding = [typeOfMediaCoding];
+
+    //Media Status
+    let statusValueMedia = statusMediaValue;
     const statusMedia: fhirR4.Code =
       statusValueMedia === "preparation" ||
       statusValueMedia === "in-progress" ||
@@ -42,77 +134,14 @@ const ObservationInput: React.FC = () => {
         ? statusValueMedia
         : "preliminary";
 
-    let statusValueObservation = (
-      e.currentTarget.elements.namedItem(
-        "statusObservation"
-      ) as HTMLInputElement
-    ).value;
-    const statusObservation: fhirR4.Observation.StatusEnum | undefined =
-      statusValueObservation === "registered" ||
-      statusValueObservation === "preliminary" ||
-      statusValueObservation === "final"
-        ? statusValueObservation
-        : "preliminary";
-
-    const observationCategory = new fhirR4.CodeableConcept();
-    //define the
-    const newCategoryCoding = new fhirR4.Coding();
-    newCategoryCoding.system =
-      "http://hl7.org/fhir/ValueSet/observation-category";
-    newCategoryCoding.code = (
-      e.currentTarget.elements.namedItem("category") as HTMLInputElement
-    ).value;
-    observationCategory.coding = [newCategoryCoding];
-
+    //LoincCode
     const newObservationCoding = new fhirR4.CodeableConcept();
-    //define the Observation coding
     const newTypeOfObservationCoding = new fhirR4.Coding();
-    newTypeOfObservationCoding.system =
-      "http://hl7.org/fhir/ValueSet/observation-codes";
-    newTypeOfObservationCoding.code = (
-      e.currentTarget.elements.namedItem("loinc_code") as HTMLInputElement
-    ).value;
+    newTypeOfObservationCoding.system = "http://loinc.org";
+    newTypeOfObservationCoding.code = loincCodeValue;
     newObservationCoding.coding = [newTypeOfObservationCoding];
 
-    //define the tyep of Media
-    const typeOfMedia = new fhirR4.CodeableConcept();
-    const typeOfMediaCoding = new fhirR4.Coding();
-    typeOfMediaCoding.system =
-      "http://terminology.hl7.org/CodeSystem/media-type";
-    typeOfMediaCoding.code = (
-      e.currentTarget.elements.namedItem("typeOfMedia") as HTMLInputElement
-    ).value;
-    typeOfMedia.coding = [typeOfMediaCoding];
-
-    //define the patient reference
-    const newPatientReference = new fhirR4.Reference();
-    newPatientReference.type = "Patient";
-    newPatientReference.reference = "Patient/" + patientId;
-
-    //define the dateTime in the needed format
-    const dateTime =
-      (e.currentTarget.elements.namedItem("dateTime") as HTMLInputElement)
-        .value + ":00+02:00";
-
-    //define the bodySite
-    const bodySite = new fhirR4.CodeableConcept();
-    const bodySiteCoding = new fhirR4.Coding();
-    bodySiteCoding.system = "http://hl7.org/fhir/ValueSet/body-site";
-    //TODO: add coding part instead of using same for text and code
-    bodySiteCoding.code = (
-      e.currentTarget.elements.namedItem("bodySite") as HTMLInputElement
-    ).value;
-    bodySite.coding = [bodySiteCoding];
-    bodySite.text = (
-      e.currentTarget.elements.namedItem("bodySite") as HTMLInputElement
-    ).value;
-
-    //deifne the annotation
-    const note = new fhirR4.Annotation();
-    note.text = (
-      e.currentTarget.elements.namedItem("note") as HTMLInputElement
-    ).value;
-    note.time = dateTime;
+    const token = await getAccessTokenSilently();
 
     if (selectedFiles) {
       const derivedFrom: fhirR4.Reference[] = [];
@@ -150,19 +179,29 @@ const ObservationInput: React.FC = () => {
           status: statusMedia,
           type: typeOfMedia,
           subject: newPatientReference,
-          createdDateTime: dateTime,
+          createdDateTime: new Date().toISOString(),
           bodySite: bodySite,
           content: photoAttachment,
           note: [note],
           resourceType: "Media",
         };
 
-        derivedFrom.push(referenceMedia);
+        //derivedFrom.push(referenceMedia);
 
         console.log(JSON.stringify(media));
+
+        try {
+          await post("Media", media, token, setSubmissionStatus);
+          derivedFrom.push(referenceMedia);
+          setSubmissionStatus("success");
+        } catch (error) {
+          setSubmissionStatus("failure");
+        }
+
         fetch("http://localhost:8080/fhir/Media", {
           method: "POST",
           headers: {
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(media),
@@ -190,40 +229,25 @@ const ObservationInput: React.FC = () => {
         identifier: [newIdentifier],
         status: statusObservation,
         category: [observationCategory],
+        issued: issueDate,
+        bodySite: bodySite,
+        interpretation: [interpretation],
         code: newObservationCoding,
-        effectiveDateTime: dateTime,
+        referenceRange: [range],
+        performer: [performer],
+        note: [note],
         derivedFrom: derivedFrom,
         subject: newPatientReference,
         resourceType: "Observation",
-        bodySite: bodySite,
-        note: [note],
       };
 
       console.log(JSON.stringify(observation));
-      fetch("http://localhost:8080/fhir/Observation", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(observation),
-      })
-        .then((response) => {
-          if (response.ok) {
-            setSubmissionStatus("success");
-          } else {
-            setSubmissionStatus("failure");
-          }
-          response.json();
-        })
-        .then((data) => {
-          // Handle the response from the API
-          console.log("Response from API:", data);
-        })
-        .catch((error) => {
-          // Handle any errors that occur during the request
-          console.error("Error:", error);
-          setSubmissionStatus("failure");
-        });
+      try {
+        await post("Observation", observation, token, setSubmissionStatus);
+        setSubmissionStatus("success");
+      } catch (error) {
+        setSubmissionStatus("failure");
+      }
     }
   };
 
@@ -265,16 +289,12 @@ const ObservationInput: React.FC = () => {
 
   return (
     <div>
-      <div>
-        <HomeButton />
-      </div>
-      <div className="flex justify-center p-10 bg-sky-800 text-4xl text-white mb-10">
-        Enter new Observation
-      </div>
+      <Banner>Enter new Observation</Banner>
       <form
         className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3"
         onSubmit={handleSubmit}
       >
+        {/*Identifier*/}
         <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
           <label>
             Identifier:
@@ -288,35 +308,23 @@ const ObservationInput: React.FC = () => {
           </label>
           <br />
         </div>
-
+        {/*LOINC Code*/}
         <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
           <label>
-            Status Media:
-            <select
-              className="text-sm"
-              name="statusMedia"
-              defaultValue=""
+            LOINC Code:
+            <input
+              className="rounded border-b-2"
+              type="text"
+              name="loinc"
               required
-            >
-              <option value="" disabled>
-                Select Status
-              </option>
-              <option value="preparation">preparation</option>
-              <option value="in-progress">in-progress</option>
-              <option value="not-done">not-done</option>
-              <option value="on-hold">on-hold</option>
-              <option value="stopped">stopped</option>
-              <option value="completed">completed</option>
-              <option value="entered-in-error">entered-in-error</option>
-              <option value="unknown">unknown</option>
-            </select>
+            />
           </label>
           <br />
         </div>
-
+        {/*Status*/}
         <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
           <label>
-            Observation Status:
+            Status:
             <select
               className="text-sm"
               name="statusObservation"
@@ -333,10 +341,10 @@ const ObservationInput: React.FC = () => {
           </label>
           <br />
         </div>
-
+        {/*Category*/}
         <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
           <label>
-            Observation Category
+            Category
             <select
               className="text-sm"
               name="category"
@@ -358,62 +366,82 @@ const ObservationInput: React.FC = () => {
           </label>
           <br />
         </div>
-
+        {/*Issue Date*/}
         <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
           <label>
-            Observation LOINC Code:
-            <input
-              className="rounded border-b-2"
-              type="text"
-              name="loinc_code"
-              required
-            />
-          </label>
-          <br />
-        </div>
-
-        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
-          <label>
-            Type of Media
-            <select
-              className="text-sm"
-              name="typeOfMedia"
-              defaultValue=""
-              required
-            >
-              <option value="" disabled>
-                Select type of Media
-              </option>
-              <option value="image">image</option>
-              <option value="video">video</option>
-              <option value="audio">audio</option>
-            </select>
-          </label>
-          <br />
-        </div>
-
-        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
-          <label>
-            Date and Time:
+            Issue Date:
             <input
               className="rounded border-b-2"
               type="datetime-local"
-              name="dateTime"
+              name="issueDate"
               required
-              defaultValue={new Date().toISOString().slice(0, 16)}
+              defaultValue={new Date().toISOString()}
             />
           </label>
           <br />
         </div>
-
+        {/*Body Site*/}
         <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
           <label>
             BodySite:
-            <input className="rounded border-b-2" type="text" name="bodySite" />
+            <input
+              className="rounded border-b-2"
+              type="text"
+              name="bodySite"
+              required
+            />
           </label>
           <br />
         </div>
+        {/*Interpretation*/}
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Interpretation:
+            <input
+              className="rounded border-b-2"
+              type="text"
+              name="interpretation"
+            />
+          </label>
+          <br />
+        </div>
+        {/*Range*/}
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>Reference Range:</label>
+          <br />
+          <div>
+            <label>
+              Low Value:
+              <input className="rounded border-b-2" type="number" name="low" />
+            </label>
+          </div>
+          <div>
+            <label>
+              High Value:
+              <input className="rounded border-b-2" type="number" name="high" />
+            </label>
+          </div>
+          <div>
+            <label>
+              Unit:
+              <input className="rounded border-b-2" type="text" name="unit" />
+            </label>
+          </div>
+        </div>
 
+        {/*Performer*/}
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Performer:
+            <input
+              className="rounded border-b-2"
+              type="text"
+              name="performer"
+            />
+          </label>
+          <br />
+        </div>
+        {/*Note*/}
         <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
           <label>
             Note:
@@ -426,17 +454,51 @@ const ObservationInput: React.FC = () => {
           </label>
           <br />
         </div>
-
+        {/*Type of Media */}
         <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
           <label>
-            Photo:
+            Type of Media
+            <select className="text-sm" name="typeOfMedia" defaultValue="">
+              <option value="" disabled>
+                Select type of Media
+              </option>
+              <option value="image">image</option>
+              <option value="video">video</option>
+              <option value="audio">audio</option>
+            </select>
+          </label>
+          <br />
+        </div>
+        {/*File */}
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Media:
             <input
               type="file"
               accept="image/*"
               onChange={handlePhotoChange}
               multiple
-              required
             />
+          </label>
+          <br />
+        </div>
+        {/* Status of the Media */}
+        <div className="p-3 font-mono md:font-mono text-lg/5 md:text-lg/5">
+          <label>
+            Status Media:
+            <select className="text-sm" name="statusMedia" defaultValue="">
+              <option value="" disabled>
+                Select Status
+              </option>
+              <option value="preparation">preparation</option>
+              <option value="in-progress">in-progress</option>
+              <option value="not-done">not-done</option>
+              <option value="on-hold">on-hold</option>
+              <option value="stopped">stopped</option>
+              <option value="completed">completed</option>
+              <option value="entered-in-error">entered-in-error</option>
+              <option value="unknown">unknown</option>
+            </select>
           </label>
           <br />
         </div>
@@ -452,10 +514,10 @@ const ObservationInput: React.FC = () => {
 
         <SubmissionStatus
           submissionStatus={submissionStatus}
-          submissionTextSucess={
+          submissionTextSuccess={
             "Observation was successfully added to the Database."
           }
-          submissionHeadlineSucess={"Submission successful!"}
+          submissionHeadlineSuccess={"Submission successful!"}
           submissionHeadlineFailure={"Submission failed. Please try again."}
           submissionTextFailure={
             "Observation could not be successfully added to the Database."

@@ -13,6 +13,8 @@ root.render(
       clientId="uDd4TGNMnPzkxiXzZ38pKhkQjAlochEy"
       authorizationParams={{
         redirect_uri: window.location.origin,
+        audience: "medTechAPI2023", 
+        scope: "openid Observation Patient Media email" //I am still not sure what the scope is used for...
       }}
     >
         <App />
