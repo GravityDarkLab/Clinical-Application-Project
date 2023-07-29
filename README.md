@@ -9,7 +9,7 @@ The CAP project emerged from an academic initiative that set out to create a hea
 ## Contents
 
 - [Project Scope](#project-scope)
-- [Frontend Integration](frontend-integration)
+- [Frontend Integration](#frontend-integration)
 - [Client - PatientGenerator](#client---patientgenerator)
 - [Server Configuration](#server-configuration)
 - [Installation and Setup](#installation-and-setup)
