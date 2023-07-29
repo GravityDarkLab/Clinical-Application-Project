@@ -55,9 +55,9 @@ To kickstart with CAP, follow these steps:
    git clone https://github.com/GravityDarkLab/Clinical-Application-Project.git
    ```
 
-2. **Server Configuration:** Navigate to the `server` directory and follow the provided instructions for server setup. Make sure you've installed all necessary dependencies.
+2. **Server Configuration:** download the prebuilt server [here](https://drive.google.com/drive/folders/1pery1-VEiU5qInV35zOIW4Vb3jjmPfdU?usp=drive_link) and follow the instructions in the Readme.
 
-3. **Optional: Download the Server:** Optionally, download the prebuilt server [here](https://drive.google.com/drive/folders/1pery1-VEiU5qInV35zOIW4Vb3jjmPfdU?usp=drive_link) and follow the instructions in the Readme.
+3. **Optional: Download the Server:** Optionally, navigate to the `server` directory and follow the provided instructions for server setup. Make sure you've installed all necessary dependencies.
 
 4. **Build the PatientGenerator:** Navigate to the `PatientGenerator-client` directory, update the configurations (if needed) to match your server's endpoint, build the client application, and start testing the server's response to different resources and HTTP methods.
 
