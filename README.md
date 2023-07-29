@@ -75,6 +75,7 @@ To kickstart with CAP, follow these steps:
 ## Usage Instructions
 
 The preceding steps help set up both the backend server and frontend application, enabling smooth interaction with the clinical data resources. If you encounter any issues or need assistance, don't hesitate to contact us.
+To login and test we provide you with this fake admin: `dummy@gmail` and password: `Test1Test1`. 
 
 ## Acknowledgments
 
