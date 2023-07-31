@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { fhirR4 } from "@smile-cdr/fhirts";
 import { renderPatientPhotos, generatePatientAddress } from "../Utils/utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit, faSave, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import EditPatientForm from "./EditPatientForm";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -40,7 +40,6 @@ const PatientDetails = () => {
       );
 
       const data = await response.json();
-      //console.log(data);
       setPatient(data);
     } catch (error) {
       console.error("Error fetching patient:", error);
@@ -59,10 +58,21 @@ const PatientDetails = () => {
     setIsEditMode(false);
   };
 
-  // Function to handle the SAVE
-  /*
-   * (This do nothings till now as the edit capabilty is not yet implemented!).
-   * PLEASE DON´T TOUCH THE SAVE ICON :) .
+  /**
+   * Handles the saving of edited patient data.
+   *
+   * This function is called when the save button is clicked on the patient's edit form.
+   * It sends a PUT request to the server to update the patient's data with the edited data.
+   * If the PUT request is successful, the local patient data is updated and the form exits edit mode.
+   * If the PUT request is not successful or if an error is thrown, an error message is logged.
+   *
+   * @param {FormEvent} event - The form event.
+   * @param {fhirR4.Patient} editedPatient - The edited patient data.
+   *
+   * @async
+   * @function
+   * @throws Will throw an error if the PUT request fails or if there's an error during the process.
+   * @see {@link http://hl7.org/fhir/R4/patient.html|FHIR Patient}
    */
   const handleSave = async (
     event: FormEvent,
@@ -92,8 +102,20 @@ const PatientDetails = () => {
       console.error("Error saving patient data:", error);
     }
   };
-
-  // Function to handle DELETE
+  /**
+   * Handles the deletion of a patient record.
+   *
+   * This function is called when the delete action is performed.
+   * It sends a DELETE request to the server to remove the patient's record.
+   * If the DELETE request is successful, it navigates to the patient listing page.
+   * If the DELETE request is not successful or if an error is thrown,
+   * it sets the submission status to "failure" and logs an error message.
+   *
+   * @async
+   * @function
+   * @throws Will throw an error if the DELETE request fails or if there's an error during the process.
+   * @see {@link http://hl7.org/fhir/R4/http.html#delete|FHIR DELETE}
+   */
   const handleDelete = async () => {
     const token = await getAccessTokenSilently();
     try {
@@ -117,8 +139,20 @@ const PatientDetails = () => {
       console.error("Error deleting patient:", error);
     }
   };
-
-  // Render patient details
+  /**
+   * Renders the patient's details or the patient edit form.
+   *
+   * This function is called to conditionally render the patient's details
+   * or the edit form for the patient. If the patient data is not yet loaded,
+   * it shows a loading text. If the 'isEditMode' state is true, it renders the
+   * 'EditPatientForm' component. Otherwise, it renders the details of the patient.
+   *
+   * The details include: ID, name, family name, gender, birthdate, phone, email,
+   * address and patient's photos. It also provides buttons to edit or delete the patient data.
+   *
+   * @function
+   * @returns {JSX.Element} The JSX.Element for rendering the patient's details or the edit form
+   */
   const renderPatientDetails = () => {
     if (!patient) {
       return <p className="text-gray-500 text-lg">Loading...</p>;
@@ -213,6 +247,17 @@ const PatientDetails = () => {
       </section>
     );
   };
+
+  /**
+   * Handles the click event to navigate to the patient's observations page.
+   *
+   * This function is called when the user clicks on the 'View Observations' button
+   * associated with a patient. It navigates to the route of the patient's observations
+   * if the patient ID is defined.
+   *
+   * @function
+   * @param {string | undefined} patientId - The ID of the patient. If undefined, no action is performed.
+   */
   const handleObservationsClick = (patientId: string | undefined) => {
     if (patientId) {
       navigate(`/observations/${patientId}`);

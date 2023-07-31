@@ -27,7 +27,21 @@ const PatientList: React.FC = () => {
     fetchPatients();
   }, [patientsPerPage, offsetPatientsPerPage, getAccessTokenSilently]);
 
-  // Fetch patients from the Server
+  /**
+   * Fetches patient data from the FHIR server.
+   *
+   * This function asynchronously retrieves a list of patients from the FHIR server
+   * using the GET method. The function then extracts the resource property from each
+   * Bundle entry in the response data and updates the component's state with the extracted
+   * patients data.
+   *
+   * If there is no 'entry' key in the response data, it means that the limit of the fetched
+   * patients has been reached, and a warning should be issued. Any encountered errors during
+   * fetching are logged in the console.
+   *
+   * @async
+   * @function
+   */
   const fetchPatients = async () => {
     const token = await getAccessTokenSilently();
     try {
@@ -42,18 +56,10 @@ const PatientList: React.FC = () => {
           },
         }
       ); // Replace with your API endpoint
-
-      console.log(
-        "http://localhost:8080/fhir/Patient?_count=" +
-          patientsPerPage +
-          "&_offset=" +
-          offsetPatientsPerPage
-      );
       const data = await response.json();
       // Extract the resource property from the Bundle entry
 
       if ("entry" in data) {
-        console.log(data);
         const patientsData = data.entry.map(
           (entry: BundleEntry) => entry.resource
         );
@@ -62,14 +68,22 @@ const PatientList: React.FC = () => {
       } else {
         //TODO : What should happen if we have reached the limit. Some warning?
       }
-      //console.log(patientsData);
     } catch (error) {
       console.error("Error fetching patients:", error);
     }
   };
 
-  // Filter patients based on the selected attribute and search text
-
+  /**
+   * Filters and sorts patient data based on selected attributes.
+   *
+   * This function filters the patient data based on the selected filter attribute and
+   * search text. The filtered patient data is then sorted based on the selected sort
+   * attribute. The function uses helper functions filterResources and sortResources for
+   * filtering and sorting respectively.
+   *
+   * @function
+   * @returns {Array} An array of sorted and filtered patient data.
+   */
   const filterAndSortPatients = () => {
     const filteredPatients = filterResources(
       patients,
@@ -80,28 +94,53 @@ const PatientList: React.FC = () => {
     return sortedPatients;
   };
 
-  // Handle search input change
+  /**
+   * Updates the search text state when search input changes.
+   *
+   * @function
+   * @param {React.ChangeEvent<HTMLInputElement>} event - The change event of the search input field.
+   */
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchText(event.target.value);
   };
-  // Handle attributes selection change
+  /**
+   * Updates the filter attribute state when the filter attribute selection changes.
+   *
+   * @function
+   * @param {React.ChangeEvent<HTMLSelectElement>} event - The change event of the filter attribute selection field.
+   */
   const handleFilterAttributeChange = (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
     setFilterAttribute(event.target.value);
   };
+  /**
+   * Updates the sort attribute state when the sort attribute selection changes.
+   *
+   * @function
+   * @param {React.ChangeEvent<HTMLSelectElement>} event - The change event of the sort attribute selection field.
+   */
   const handleSortAttributeChange = (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
     setSortAttribute(event.target.value);
   };
 
-  // Refresh the patient data by fetching patients again
+  /**
+   * Refreshes the patient data by fetching patients again.
+   *
+   * @function
+   */
   const handleRefresh = () => {
     fetchPatients(); // Fetch patients again to refresh the data
   };
 
-  // Navigate to the patient detail page with the patientId as a parameter
+  /**
+   * Navigates to the patient detail page with the patientId as a parameter.
+   *
+   * @function
+   * @param {string | undefined} patientId - The id of the patient to navigate to their detail page.
+   */
   const handleRowClick = (patientId: string | undefined) => {
     if (patientId) {
       // Navigate to the patient detail page with the patientId as a parameter
@@ -109,16 +148,27 @@ const PatientList: React.FC = () => {
     }
   };
 
+  /**
+   * Handles changes to the number of patients to display per page.
+   *
+   * @function
+   * @param {string} value - The desired number of patients to display per page as a string.
+   */
   const handlePatientsPerPageChange = (value: string) => {
     const parsedValue = parseInt(value, 10);
     setpatientsPerPage(parsedValue);
   };
-
+  /**
+   * Handles changes to the offset of patients to display per page.
+   * If a negative offset value is received, it's reset to zero.
+   *
+   * @function
+   * @param {number} value - The desired offset of patients to display per page.
+   */
   const handleOffsetPatientPerPageChange = (value: number) => {
     if (value < 0) {
       value = 0;
     }
-    console.log(value);
     setoffsetPatientsPerPage(value);
   };
 

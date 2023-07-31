@@ -28,35 +28,54 @@ const PatientObservationsList = () => {
     fetchObservation();
   }, [patientId, mediaPerPage, offsetMediaPerPage, getAccessTokenSilently]);
 
+  /**
+   * Navigate to the Add Observation page for a given patient.
+   * @param {string} patientId - The ID of the patient.
+   */
   const handleClickAddObservation = async (patientId: string | undefined) => {
     if (patientId) {
       navigate(`/observations/addObservation/${patientId}`);
     }
   };
-
+  /**
+   * Update the number of Observations to be displayed per page.
+   * @param {string} value - The number of Observations to be displayed per page.
+   */
   const handleObservationPerPageChange = (value: string) => {
     const parsedValue = parseInt(value, 10);
     setMediaPerPage(parsedValue);
   };
-
+  /**
+   * Update the offset for the Observations page.
+   * @param {number} value - The offset value.
+   */
   const handleOffsetObervationPerPageChange = (value: number) => {
     if (value < 0) {
       value = 0;
     }
-    console.log(value);
     setoffsetMediaPerPage(value);
   };
-  // Handle attributes selection change
+  /**
+   * Handle changes in the selected filter attribute.
+   * @param {Object} event - The event object.
+   */
   const handleFilterAttributeChange = (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
     setFilterAttribute(event.target.value);
   };
+  /**
+   * Handle changes in the selected sort attribute.
+   * @param {Object} event - The event object.
+   */
   const handleSortAttributeChange = (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
     setSortAttribute(event.target.value);
   };
+  /**
+   * Fetch Observations data for a given patient.
+   */
   const fetchObservation = async () => {
     const token = await getAccessTokenSilently();
     try {
@@ -73,30 +92,40 @@ const PatientObservationsList = () => {
         (entry: BundleEntry) => entry.resource
       );
 
-      console.log(patientsData);
       setMedia(patientsData);
     } catch (error) {
       console.error("Error fetching patient:", error);
     }
   };
-  // Refresh the patient data by fetching patients again
+  /**
+   * Refresh the Observation data by re-fetching it from the server.
+   */
   const handleRefresh = () => {
     fetchObservation(); // Fetch patients again to refresh the data
   };
 
-  // Handle search input change
+  /**
+   * Update the search text when the search input changes.
+   * @param {Object} event - The event object.
+   */
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchText(event.target.value);
   };
 
-  // Navigate to the patient detail page with the patientId as a parameter
+  /**
+   * Navigate to the detail page for a given observation.
+   * @param {string} observationId - The ID of the observation.
+   */
   const handleRowClick = (observationId: string | undefined) => {
     if (observationId) {
       // Navigate to the patient detail page with the patientId as a parameter
       navigate(`/observation/${observationId}`);
     }
   };
-
+  /**
+   * Filter and sort the Observations.
+   * @return {Array} The filtered and sorted Observations.
+   */
   const filterAndSortObservation = () => {
     const filteredPatients = filterResources(
       media,

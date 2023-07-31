@@ -10,6 +10,32 @@ interface SubmissionStatusProps {
   submissionHeadlineFailure: string | null;
 }
 
+/**
+ * `SubmissionStatus` is a React functional component that displays submission success or failure notifications.
+ * It uses the FontAwesome library to provide the closing icon for the notification.
+ * It's styled using the Tailwind CSS library.
+ *
+ * @component
+ * @param {SubmissionStatusProps} props - Props that pass the submission status, submission success text and headline,
+ * submission failure text and headline.
+ *
+ * @property {string | null} submissionStatus - Represents the status of submission, can be "success", "failure", or null.
+ * @property {string | null} submissionTextSuccess - Text that is shown on successful submission.
+ * @property {string | null} submissionHeadlineSuccess - Headline that is shown on successful submission.
+ * @property {string | null} submissionTextFailure - Text that is shown on failed submission.
+ * @property {string | null} submissionHeadlineFailure - Headline that is shown on failed submission.
+ *
+ * @returns {ReactElement} The rendered `SubmissionStatus` component.
+ *
+ * @example
+ * <SubmissionStatus
+ *   submissionStatus="success"
+ *   submissionTextSuccess="Your submission was successful."
+ *   submissionHeadlineSuccess="Success!"
+ *   submissionTextFailure="An error occurred. Please try again."
+ *   submissionHeadlineFailure="Failure!"
+ * />
+ */
 const SubmissionStatus: React.FC<SubmissionStatusProps> = ({
   submissionStatus,
   submissionTextSuccess,

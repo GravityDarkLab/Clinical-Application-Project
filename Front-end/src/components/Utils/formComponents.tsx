@@ -1,13 +1,26 @@
-import React, { FC, ChangeEvent, FormEvent } from "react";
-import Banner from "../elements/Banner";
-import SubmissionStatus from "../elements/SubmissonStatus";
+import React, { FC, ChangeEvent } from "react";
 
+/**
+ * @typedef {object} OptionType
+ * @property {string} label - Display text for the option.
+ * @property {string} value - Actual value for the option.
+ * @property {boolean} [disabled] - Optional property to disable the option.
+ */
 type OptionType = {
   label: string;
   value: string;
   disabled?: boolean;
 };
 
+/**
+ * @typedef {object} FormFieldProps
+ * @property {string} label - Label for the form field.
+ * @property {string} name - Name attribute for the form field.
+ * @property {"text" | "select" | "file" | "email" | "tel" | "date" | "checkbox"} type - Defines the type of the form field.
+ * @property {boolean} [required] - Optional property to set if the field is required.
+ * @property {OptionType[]} [options] - Optional array of options for select field.
+ * @property {(e: ChangeEvent<HTMLInputElement>) => void} [handler] - Optional event handler for the input field change event.
+ */
 type FormFieldProps = {
   label: string;
   name: string;
@@ -17,6 +30,13 @@ type FormFieldProps = {
   handler?: (e: ChangeEvent<HTMLInputElement>) => void;
 };
 
+/**
+ * FormField component. A reusable component for different types of form fields.
+ *
+ * @component
+ * @param {FormFieldProps} props - Props that get passed to the FormField component.
+ * @returns {FC} - Returns FormField as a functional component.
+ */
 export const FormField: FC<FormFieldProps> = ({
   label,
   name,

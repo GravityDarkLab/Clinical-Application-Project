@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { fhirR4 } from "@smile-cdr/fhirts";
 import { RenderObservations } from "../Utils/utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit, faSave, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import EditObservationForm from "./EditObservationForm";
 import BundleEntry from "../Utils/BundleEntry";
@@ -26,8 +26,28 @@ const ObservationDetails = () => {
   }, [observationId, getAccessTokenSilently]);
 
   /**
-   * Fetches the Observation data and associated Media based on the given observationId.
-   */
+   * This asynchronous function is responsible for fetching the data for a specific
+   * Observation and its associated Media from a FHIR server.
+   *
+   * @async
+   * @function
+   *
+   * @description
+   * The function first acquires an access token silently.
+   * The observation data is fetched using the observationId from the FHIR server.
+   * If the request is successful, the JSON response is parsed and assigned to the observation state.
+   * If the Observation has associated Media (derivedFrom references), these are handled next.
+   * For each derivedFrom reference, a request is made to the FHIR server to fetch the corresponding Media.
+   * If the Media fetch is successful, the response is parsed and added to the mediaArray.
+   * After all associated Media has been fetched and processed, the mediaArray is set to the Media state.
+   * If an error occurs during the process, it is logged in the console.
+   *
+   * @note
+   * The fetch API does not throw an error for HTTP error status (unlike axios),
+   * hence the need to handle HTTP errors manually by checking the 'ok' property of the response.
+   *
+   * @returns {void}
+   * */
   const fetchObservation = async () => {
     try {
       const token = await getAccessTokenSilently();
@@ -99,8 +119,20 @@ const ObservationDetails = () => {
     }
   };
 
-  // Function to handle the edit button click
-
+  /**
+   * This function is responsible for enabling the edit mode in the UI and
+   * setting the current observation data as the initial data for the editing operation.
+   *
+   * @function handleEdit
+   *
+   * @description
+   * When invoked, this function sets the `isEditMode` state to `true`, enabling the edit mode.
+   * If an Observation object is available, it sets the `editedObservation` state with this
+   * current Observation data. This allows the user to see the current data in the form fields
+   * while they are making changes.
+   *
+   * @returns {void}
+   */
   const handleEdit = () => {
     setIsEditMode(true);
     if (observation) {
@@ -108,12 +140,40 @@ const ObservationDetails = () => {
     }
   };
 
+  /**
+   * This function is responsible for disabling the edit mode in the UI.
+   *
+   * @function handleCancelEdit
+   *
+   * @description
+   * When invoked, this function sets the `isEditMode` state to `false`, disabling the edit mode.
+   * This is typically used when the user decides to cancel the editing operation.
+   * After the execution of this function, the UI should reflect the view mode and not the edit mode.
+   *
+   * @returns {void}
+   */
   const handleCancelEdit = () => {
     setIsEditMode(false);
   };
 
-  // Function to handle the SAVE
-
+  /**
+   * This function handles saving an edited observation.
+   *
+   * @async
+   * @function handleSave
+   *
+   * @param {FormEvent} event - The event object that triggered the save action. This is usually the form submission event.
+   * @param {fhirR4.Observation} editedObservation - The Observation object that holds the updated data.
+   *
+   * @description
+   * This function is invoked when the user saves the edited Observation data.
+   * First, it prevents the default form submission action.
+   * Then, it fetches the access token silently and performs a PUT request to the FHIR server, sending the updated Observation data.
+   * If the request is successful (response.ok is true), it updates the current Observation state with the edited Observation and sets the isEditMode state to false, indicating the editing process is finished.
+   * In case of any errors during the request, it logs the error message to the console.
+   *
+   * @returns {Promise<void>}
+   */
   const handleSave = async (
     event: FormEvent,
     editedObservation: fhirR4.Observation
@@ -134,7 +194,6 @@ const ObservationDetails = () => {
       );
       if (response.ok) {
         setObservation(editedObservation);
-        console.log(response);
         setIsEditMode(false);
       } else {
         console.error("Failed to save patient data");
@@ -145,7 +204,21 @@ const ObservationDetails = () => {
   };
 
   /**
-   * Function to handle the deletion of an Observation and its associated Media.
+   * This function handles deleting an observation.
+   *
+   * @async
+   * @function handleDelete
+   *
+   * @description
+   * This function is invoked when the user wants to delete a specific Observation.
+   * First, it fetches the access token silently and performs a GET request to the FHIR server to fetch the current Observation data.
+   * If the GET request is unsuccessful (response.ok is false), it logs the error message to the console and stops the execution of the function.
+   * If the fetched Observation has any associated Media (determined by the derivedFrom property), it iterates over each associated Media and performs a DELETE request to remove it.
+   * After that, it performs a DELETE request to remove the Observation from the FHIR server.
+   * If the DELETE request is successful, it navigates the user back to the previous page.
+   * In case of any errors during the requests, it logs the error message to the console.
+   *
+   * @returns {Promise<void>}
    */
   const handleDelete = async () => {
     try {
@@ -176,8 +249,9 @@ const ObservationDetails = () => {
         for (const derivedFrom of observationData.derivedFrom) {
           try {
             // Delete the Media based on the derivedFrom reference
+
             await fetch(
-              `http://localhost:8080/fhir/Media/${derivedFrom.reference}`,
+              `http://localhost:8080/fhir/Media?identifier=${derivedFrom.identifier.value}`,
               {
                 method: "DELETE",
                 headers: {

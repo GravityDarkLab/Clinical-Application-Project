@@ -17,16 +17,20 @@ const ObservationInput: React.FC = () => {
   const { getAccessTokenSilently } = useAuth0();
 
   /**
-   * Handles the form submission event.
-   * POST to "http://localhost:8080/fhir/Observation" and
-   * POST to "http://localhost:8080/fhir/Media"
-   * @param e - The form submission event.
+   * Handles the submission of the form.
+   *
+   * This function gathers the data from the form, constructs Observation and Media instances according to the FHIR R4 specification,
+   * and sends them to a FHIR server. If any selected files are detected, they are also sent as Media instances.
+   *
+   * If the API request succeeds, the submission status is updated to 'success'; if it fails, it's updated to 'failure'.
+   *
+   * @param {React.FormEvent<HTMLFormElement>} e - The event object from the form submission event.
    */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    // 1. Extract form data
+    // Extract the values from the form and prepare them for the FHIR objects.
     const formData = new FormData(e.currentTarget);
-
     const newIdentifierValue = formData.get("identifier") as string;
     const statusObservationValue = formData.get("statusObservation") as string;
     const categoryValue = formData.get("category") as string;
@@ -186,17 +190,7 @@ const ObservationInput: React.FC = () => {
           resourceType: "Media",
         };
 
-        //derivedFrom.push(referenceMedia);
-
-        console.log(JSON.stringify(media));
-
-        try {
-          await post("Media", media, token, setSubmissionStatus);
-          derivedFrom.push(referenceMedia);
-          setSubmissionStatus("success");
-        } catch (error) {
-          setSubmissionStatus("failure");
-        }
+        derivedFrom.push(referenceMedia);
 
         fetch("http://localhost:8080/fhir/Media", {
           method: "POST",
@@ -223,8 +217,6 @@ const ObservationInput: React.FC = () => {
           });
       }
 
-      console.log(derivedFrom);
-
       const observation: fhirR4.Observation = {
         identifier: [newIdentifier],
         status: statusObservation,
@@ -241,7 +233,6 @@ const ObservationInput: React.FC = () => {
         resourceType: "Observation",
       };
 
-      console.log(JSON.stringify(observation));
       try {
         await post("Observation", observation, token, setSubmissionStatus);
         setSubmissionStatus("success");
@@ -250,31 +241,42 @@ const ObservationInput: React.FC = () => {
       }
     }
   };
-
+  /**
+   * Handles the change event from a file input element.
+   *
+   * When files are selected from the file input, this function reads each file, converts them to base64,
+   * and adds them to the state. The base64 strings can then be sent to a server or used in a `src` attribute of an image tag.
+   *
+   * If any error occurs while reading a file, it will be logged in the console.
+   *
+   * @param {React.ChangeEvent<HTMLInputElement>} e - The event object from the file input change event.
+   */
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files); // Convert FileList to an array
-
+      // For each file, we create a new Promise that resolves with the base64 string of the file.
+      // The FileReader API is used to read the file as a data URL, and the base64 part of the data URL is extracted.
       Promise.all(
         files.map((file) => {
           return new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
-
+            // When the file is successfully read, resolve the Promise with the base64 string
             reader.onload = (event: ProgressEvent<FileReader>) => {
               if (event.target && event.target.result) {
                 const base64Binary = event.target.result.toString();
                 resolve(base64Binary);
               }
             };
-
+            // If there's an error reading the file, reject the Promise with the error
             reader.onerror = (event: ProgressEvent<FileReader>) => {
               reject(event.target?.error);
             };
-
+            // Read the file as a data URL
             reader.readAsDataURL(file); // Read the file as data URL
           });
         })
       )
+        // When all Promises have resolved, the base64 strings will be set in the state
         .then((base64Binaries) => {
           setSelectedFiles((prevPhotoFiles) => [
             ...(prevPhotoFiles || []),
@@ -401,6 +403,7 @@ const ObservationInput: React.FC = () => {
               className="rounded border-b-2"
               type="text"
               name="interpretation"
+              required
             />
           </label>
           <br />

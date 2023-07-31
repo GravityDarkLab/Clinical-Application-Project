@@ -16,9 +16,16 @@ const PatientForm: React.FC = () => {
   const { getAccessTokenSilently } = useAuth0();
 
   /**
-   * Handles the form submission event.
-   * POST to "http://localhost:8080/fhir/Patient"
-   * @param e - The form submission event.
+   * Handles the submission of the patient form.
+   *
+   * This function is invoked when a user submits the patient form. It
+   * constructs a new patient object from the form data and submits it
+   * for storage. If a patient photo has been uploaded, it is read
+   * as a data URL, converted to a FHIR attachment, and included in
+   * the patient data before submission.
+   *
+   * @function
+   * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
    */
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -104,13 +111,13 @@ const PatientForm: React.FC = () => {
         code:
           (
             e.currentTarget.elements.namedItem(
-              "martialStatus"
+              "maritalStatus"
             ) as HTMLSelectElement
           ).value ?? "",
         display:
           (
             e.currentTarget.elements.namedItem(
-              "martialStatus"
+              "maritalStatus"
             ) as HTMLSelectElement
           ).selectedOptions[0].textContent ?? "",
       },
@@ -193,6 +200,16 @@ const PatientForm: React.FC = () => {
     handlePhotoUpload(photoFile, newPatient);
   };
 
+  /**
+   * Handles the selection of a photo file.
+   *
+   * This function is invoked when a user selects a file through the file input
+   * element in the patient form. If at least one file is selected, the first
+   * file is stored in the component's state for later use.
+   *
+   * @function
+   * @param {React.ChangeEvent<HTMLInputElement>} e - The change event from the file input element.
+   */
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setPhotoFile(e.target.files[0]);

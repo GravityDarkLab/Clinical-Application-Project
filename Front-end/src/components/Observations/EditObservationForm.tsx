@@ -14,6 +14,18 @@ interface EditObservationFormProps {
   onCancel: () => void;
 }
 
+/**
+ * EditObservationForm is a React Functional Component that provides a form for editing an observation.
+ * It uses two pieces of local state: editedObservation and editedMedia.
+ * It has two handlers: one for input changes and one for form submission.
+ * It takes the following props:
+ * observation - the initial observation to be edited
+ * media - the associated media to be edited
+ * onSave - function to be called on form submission
+ * onCancel - function to be called when the form is cancelled
+ * @component
+ * @param {EditObservationFormProps} {observation, media, onSave, onCancel}
+ */
 const EditObservationForm: React.FC<EditObservationFormProps> = ({
   observation,
   media,
@@ -23,7 +35,13 @@ const EditObservationForm: React.FC<EditObservationFormProps> = ({
   const [editedObservation, setEditedObservation] =
     useState<fhirR4.Observation>(observation);
   const [editedMedia, setEditedMedia] = useState<fhirR4.Media[]>(media);
-
+  /**
+   * Function to handle input change and set the state of the edited observation
+   * It handles special cases for identifier, status, category and date fields
+   * For other fields, it sets their values directly.
+   * @function handleInputChange
+   * @param {ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>} e - The input change event
+   */
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>
   ): void => {
@@ -70,7 +88,13 @@ const EditObservationForm: React.FC<EditObservationFormProps> = ({
       }));
     }
   };
-
+  /**
+   * Function to handle form submission
+   * It prevents the default form submission event and calls the onSave function with the edited observation and media
+   * @function handleSubmit
+   * @param {FormEvent<HTMLFormElement>} e - The form event
+   * @returns {Promise<void>}
+   */
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     await onSave(e, editedObservation, editedMedia);
