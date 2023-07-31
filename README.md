@@ -88,17 +88,6 @@ We extend our heartfelt gratitude to the [Hapi-FHIR](https://github.com/hapifhir
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
-<<<<<<< HEAD
-[![All Contributors](https://img.shields.io/github/all-contributors/GravityDarkLab/Clinical-Application-Project/?color=ee8449&style=flat-square)](#contributors)
-=======
-<table>
-  <tbody>
-    <tr>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/aaron3636"><img src="https://avatars.githubusercontent.com/u/103128387?v=4?s=100" width="100px;" alt="aaron3636"/><br /><sub><b>aaron3636</b></sub></a><br /><a href="#projectManagement-aaron3636" title="Project Management">📆</a></td>
-    </tr>
-  </tbody>
-</table>
-
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
 
@@ -109,6 +98,17 @@ We extend our heartfelt gratitude to the [Hapi-FHIR](https://github.com/hapifhir
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/aaron3636"><img src="https://avatars.githubusercontent.com/u/103128387?v=4?s=100" width="100px;" alt="aaron3636"/><br /><sub><b>aaron3636</b></sub></a><br /><a href="#projectManagement-aaron3636" title="Project Management">📆</a></td>
+    </tr>
+  </tbody>
+</table>
+
+
+
 ## License
 
 CAP is licensed under the [MIT License](LICENSE). You are free to use, modify, and distribute the code in line with the license terms.
