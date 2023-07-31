@@ -81,6 +81,17 @@ To login and test we provide you with this fake admin: `dummy@gmail` and passwor
 
 We extend our heartfelt gratitude to the [Hapi-FHIR](https://github.com/hapifhir/hapi-fhir-jpaserver-starter) community for providing the fundamental server component for CAP. Their dedication to open-source healthcare solutions has been instrumental in fostering healthcare interoperability.
 
+## Contributors
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
 ## License
 
 CAP is licensed under the [MIT License](LICENSE). You are free to use, modify, and distribute the code in line with the license terms.
