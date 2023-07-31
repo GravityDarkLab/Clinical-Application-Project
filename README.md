@@ -1,6 +1,7 @@
 # Clinical Application Project (CAP)
+
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Welcome to CAP! This repository includes a server and client application suite designed to revolutionize the evaluation of clinical data resources. The server, built on top of the open-source [Hapi-FHIR](https://hapifhir.io/) project, features [Auth0](https://auth0.com/) bearer token authentication to secure your data.
@@ -88,26 +89,19 @@ We extend our heartfelt gratitude to the [Hapi-FHIR](https://github.com/hapifhir
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-<!-- markdownlint-disable -->
-
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors)
 <table>
   <tbody>
     <tr>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/aaron3636"><img src="https://avatars.githubusercontent.com/u/103128387?v=4?s=100" width="100px;" alt="aaron3636"/><br /><sub><b>aaron3636</b></sub></a><br /><a href="#projectManagement-aaron3636" title="Project Management">📆</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/aaron3636"><img src="https://avatars.githubusercontent.com/u/103128387?v=4?s=100" width="100px;" alt="aaron3636"/><br /><sub><b>aaron3636</b></sub></a><br /><a href="#Collaborator-aaron3636" title="Collaborator">👨🏼‍💻</a></td>
     </tr>
   </tbody>
 </table>
 
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
 
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## License
 
