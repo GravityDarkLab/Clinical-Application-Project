@@ -1,0 +1,26 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "aaron3636",
+      "name": "aaron3636",
+      "avatar_url": "https://avatars.githubusercontent.com/u/103128387?v=4",
+      "profile": "https://github.com/aaron3636",
+      "contributions": [
+        "projectManagement"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "projectName": "Clinical-Application-Project",
+  "projectOwner": "GravityDarkLab"
+}
