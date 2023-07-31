@@ -105,7 +105,6 @@ We extend our heartfelt gratitude to the [Hapi-FHIR](https://github.com/hapifhir
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 <!-- markdownlint-disable -->
 
->>>>>>> origin/all-contributors/add-aaron3636
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
 
