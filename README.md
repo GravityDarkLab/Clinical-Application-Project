@@ -85,12 +85,11 @@ We extend our heartfelt gratitude to the [Hapi-FHIR](https://github.com/hapifhir
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
-
+[![All Contributors](https://img.shields.io/github/all-contributors/GravityDarkLab/Clinical-Application-Project/?color=ee8449&style=flat-square)](#contributors)
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
-
 ## License
 
 CAP is licensed under the [MIT License](LICENSE). You are free to use, modify, and distribute the code in line with the license terms.
