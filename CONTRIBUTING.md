@@ -44,5 +44,8 @@ If your changes involve any updates or additions to the project's documentation,
 
 Every contribution is valuable, and we will recognize all contributors to the project in our [Contributor List](https://github.com/GravityDarkLab/Clinical-Application-Project/graphs/contributors).
 
+Questions
+If you have any further questions, feel free to post it [here](https://github.com/GravityDarkLab/Clinical-Application-Project/discussions).
+
 
 Thank you again for your interest in contributing to our project!
